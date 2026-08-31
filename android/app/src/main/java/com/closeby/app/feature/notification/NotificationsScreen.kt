@@ -117,7 +117,7 @@ fun NotificationsScreen(
     onNotificationClick: (AppNotification) -> Unit = {},
     onRetry: () -> Unit = {}
 ) {
-    val hasUnread = (uiState as? NotificationsUiState.List)?.notifications?.any { !it.isRead } == true
+    val hasUnread = (uiState as? NotificationsUiState.Loaded)?.notifications?.any { !it.isRead } == true
 
     Scaffold(
         topBar = {
@@ -170,7 +170,7 @@ fun NotificationsScreen(
                     )
                     TextButton(onClick = onRetry) { Text("Retry") }
                 }
-                is NotificationsUiState.List -> LazyColumn(
+                is NotificationsUiState.Loaded -> LazyColumn(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(uiState.notifications, key = { it.id }) { notification ->

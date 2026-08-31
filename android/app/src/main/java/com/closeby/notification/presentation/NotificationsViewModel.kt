@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 sealed interface NotificationsUiState {
     data object Loading : NotificationsUiState
     data object Empty : NotificationsUiState
-    data class List(val notifications: List<AppNotification>) : NotificationsUiState
+    data class Loaded(val notifications: List<AppNotification>) : NotificationsUiState
     data class Error(val message: String) : NotificationsUiState
 }
 
@@ -43,7 +43,7 @@ class NotificationsViewModel(
                     _uiState.value = if (notifications.isEmpty()) {
                         NotificationsUiState.Empty
                     } else {
-                        NotificationsUiState.List(notifications)
+                        NotificationsUiState.Loaded(notifications)
                     }
                     refreshUnreadCount(resolvedUserId)
                 }
@@ -84,7 +84,7 @@ class NotificationsViewModel(
                 _uiState.value = if (notifications.isEmpty()) {
                     NotificationsUiState.Empty
                 } else {
-                    NotificationsUiState.List(notifications)
+                    NotificationsUiState.Loaded(notifications)
                 }
             }
     }

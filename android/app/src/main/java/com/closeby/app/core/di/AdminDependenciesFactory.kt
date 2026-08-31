@@ -4,6 +4,7 @@ import com.closeby.admin.data.repository.MockAdminRepository
 import com.closeby.admin.data.repository.SupabaseAdminRepository
 import com.closeby.admin.domain.repository.AdminRepository
 import com.closeby.app.BuildConfig
+import kotlinx.coroutines.runBlocking
 
 object AdminDependenciesFactory {
 
@@ -13,7 +14,9 @@ object AdminDependenciesFactory {
     private val mockRepository: MockAdminRepository by lazy {
         MockAdminRepository(
             currentUserIdProvider = {
-                ProviderDependenciesFactory.authRepository().getCurrentSession()?.userId
+                runBlocking {
+                    ProviderDependenciesFactory.authRepository().getCurrentSession()?.userId
+                }
             }
         )
     }
