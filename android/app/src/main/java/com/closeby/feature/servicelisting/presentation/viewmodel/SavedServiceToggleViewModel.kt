@@ -13,7 +13,7 @@ class SavedServiceToggleViewModel(
 ) : ViewModel() {
 
     val savedIds: StateFlow<Set<String>> = repository.observeSavedServiceIds()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     private val inFlight = mutableSetOf<String>()
 
