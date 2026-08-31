@@ -33,10 +33,29 @@ jobs:
           fi
 
       - name: Build debug APK
+        id: gradle_build
+        continue-on-error: true
         working-directory: android
         run: |
           set -o pipefail
           ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
+
+      - name: Post compile errors to PR
+        if: steps.gradle_build.outcome == 'failure' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "## Gradle compile errors"
+            echo '```'
+            grep -E "^e:|^FAILURE:" gradle-build.log | head -40 || tail -40 gradle-build.log
+            echo '```'
+          } > /tmp/build-errors.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/build-errors.md
+
+      - name: Fail build if Gradle failed
+        if: steps.gradle_build.outcome == 'failure'
+        run: exit 1
 
       - name: Print build errors on failure
         if: failure()
