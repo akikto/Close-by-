@@ -16,11 +16,17 @@ Apply SQL files in this exact order. Each phase depends on prior schemas.
 | 10 | `schema_phase11.sql` | 11 — Saved services | Phase 9 |
 | 11 | `schema_phase12.sql` | 12 — Production hardening | All prior |
 
+## Batch 5 (Phase 17)
+
+| Order | File | Phase | Depends on |
+|-------|------|-------|------------|
+| 12 | `schema_phase17.sql` | 17 — Production indexes | Phase 11 |
+
+Forward-only index migration for saved services, notifications, requests, reviews, reports, ads.
+
 ## Batch 4 (Phases 13–16)
 
 No new destructive migrations required. Batch 4 adds:
-
-- Client-side offline cache (SharedPreferences)
 - Notification event completion (uses existing `notifications` table)
 - `PushNotificationGateway` abstraction (optional FCM; `device_tokens` from Phase 6)
 

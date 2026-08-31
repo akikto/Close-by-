@@ -11,13 +11,18 @@ class NotificationRemoteDataSource(
     private val client: io.github.jan.supabase.SupabaseClient = SupabaseClientProvider.client
 ) {
 
-    suspend fun getByUser(userId: String): List<NotificationDto> =
+    suspend fun getByUser(userId: String, limit: Int = DEFAULT_PAGE_SIZE): List<NotificationDto> =
         client.from("notifications")
             .select {
                 filter { eq("user_id", userId) }
                 order("created_at", Order.DESCENDING)
+                limit(limit.toLong())
             }
             .decodeList<NotificationDto>()
+
+    companion object {
+        const val DEFAULT_PAGE_SIZE = 100
+    }
 
     suspend fun countUnread(userId: String): Int =
         client.from("notifications")
