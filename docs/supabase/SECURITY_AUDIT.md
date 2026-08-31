@@ -26,6 +26,17 @@
 | `admin_*` views (Phase 8) | Yes | `is_admin()` gate |
 | `account_deletion_requests` (Phase 9) | Yes | User submits own; admin processes |
 
+## Batch 5 additions (Phase 17–20)
+
+| Area | Status |
+|------|--------|
+| Saved-service favorite toggle on cards/details | Implemented |
+| Anonymous → account migration prompt | Implemented |
+| Blocked providers management screen | Implemented |
+| Notification publishers (trust/admin/ads/account) | Wired via `NotificationEventPublisher` |
+| `schema_phase17.sql` index migration | Created — **NOT executed** in agent environment |
+| Version `1.0.0-rc1` (versionCode 2) | Release candidate |
+
 ## Findings
 
 1. **Admin notification insert** — `notifications_insert` allows `is_admin()` inserts. Correct for server-side/admin flows; Android never uses service role.
