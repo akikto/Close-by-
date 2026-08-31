@@ -2,7 +2,7 @@
 -- Apply after schema_phase3.sql. Idempotent where possible.
 
 -- ---------------------------------------------------------------------------
--- Anonymous / session-scoped customer request ownership
+-- Anonymous / session-scoped customer request metadata
 -- ---------------------------------------------------------------------------
 alter table public.service_requests
     add column if not exists client_session_id text;
@@ -26,53 +26,32 @@ create index if not exists service_requests_created_at_idx
     on public.service_requests (created_at desc);
 
 -- ---------------------------------------------------------------------------
--- RLS: replace insecure anonymous read (customer_id IS NULL OR ...) with
--- session-scoped access. Requires app to send header:
---   x-client-session-id: <uuid>
+-- RLS: replace Phase 3 insecure anonymous read (customer_id IS NULL OR ...)
+-- Authenticated customers read via customer_id. Providers read their requests.
+-- Anonymous listing is handled on-device via remembered request UUIDs (see app).
 -- ---------------------------------------------------------------------------
 drop policy if exists "Customers read own requests" on public.service_requests;
 
 create policy "Customers read own requests"
     on public.service_requests for select
     using (
-        (customer_id is not null and customer_id = auth.uid())
-        or (
-            client_session_id is not null
-            and client_session_id = coalesce(
-                current_setting('request.headers', true)::json->>'x-client-session-id',
-                ''
-            )
-        )
+        customer_id is not null
+        and customer_id = auth.uid()
     );
 
 drop policy if exists "Customers cancel own pending requests" on public.service_requests;
+
 create policy "Customers cancel own pending requests"
     on public.service_requests for update
     using (
         status = 'PENDING'
-        and (
-            (customer_id is not null and customer_id = auth.uid())
-            or (
-                client_session_id is not null
-                and client_session_id = coalesce(
-                    current_setting('request.headers', true)::json->>'x-client-session-id',
-                    ''
-                )
-            )
-        )
+        and customer_id is not null
+        and customer_id = auth.uid()
     )
     with check (
         status in ('PENDING', 'CANCELLED')
-        and (
-            (customer_id is not null and customer_id = auth.uid())
-            or (
-                client_session_id is not null
-                and client_session_id = coalesce(
-                    current_setting('request.headers', true)::json->>'x-client-session-id',
-                    ''
-                )
-            )
-        )
+        and customer_id is not null
+        and customer_id = auth.uid()
     );
 
 -- Providers may only transition statuses on their own requests (existing policy

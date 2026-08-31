@@ -37,6 +37,7 @@ class SupabaseServiceRequestRepository(
             val created = ServiceRequestMapper.toDomain(dto)
                 ?: throw IllegalStateException("Created request has invalid data.")
             clientSessionStorage?.rememberRequestId(created.id)
+            clientSessionStorage?.cacheRequest(created)
             RequestNotificationBridge.publish(RequestNotificationEvent.NewProviderRequest(created.id))
             created
         }
@@ -45,21 +46,33 @@ class SupabaseServiceRequestRepository(
         customerId: String?,
         clientSessionId: String?
     ): Result<List<ServiceRequest>> = runCatching {
-        val fromAuth = if (customerId != null) {
+        val fromAuth = if (!customerId.isNullOrBlank()) {
             remote.getByCustomerId(customerId)
         } else {
             emptyList()
         }
-        val fromSession = if (!clientSessionId.isNullOrBlank()) {
-            remote.getByClientSession(clientSessionId)
+
+        val fromIds = if (customerId.isNullOrBlank()) {
+            val remembered = clientSessionStorage?.getRememberedRequestIds().orEmpty()
+            if (remembered.isEmpty()) {
+                emptyList()
+            } else {
+                runCatching { remote.getByIds(remembered.toList()) }.getOrDefault(emptyList())
+            }
         } else {
             emptyList()
         }
-        val remembered = clientSessionStorage?.getRememberedRequestIds().orEmpty()
-        val fromIds = remote.getByIds(remembered.toList())
-        (fromAuth + fromSession + fromIds)
+
+        val cached = if (customerId.isNullOrBlank()) {
+            clientSessionStorage?.getCachedRequests().orEmpty()
+        } else {
+            emptyList()
+        }
+
+        (fromAuth.mapNotNull(ServiceRequestMapper::toDomain) +
+            fromIds.mapNotNull(ServiceRequestMapper::toDomain) +
+            cached)
             .distinctBy { it.id }
-            .mapNotNull(ServiceRequestMapper::toDomain)
             .sortedByDescending { it.createdAt }
     }
 
@@ -71,9 +84,14 @@ class SupabaseServiceRequestRepository(
     override suspend fun getRequestById(requestId: String): Result<ServiceRequest> =
         runCatching {
             val dto = remote.getById(requestId)
-                ?: throw NoSuchElementException("Request not found.")
-            ServiceRequestMapper.toDomain(dto)
-                ?: throw IllegalStateException("Request has invalid data.")
+            if (dto != null) {
+                ServiceRequestMapper.toDomain(dto)
+                    ?: throw IllegalStateException("Request has invalid data.")
+            } else {
+                clientSessionStorage?.getCachedRequests()
+                    ?.firstOrNull { it.id == requestId }
+                    ?: throw NoSuchElementException("Request not found.")
+            }
         }
 
     override suspend fun acceptRequest(requestId: String, providerId: String): Result<ServiceRequest> {
@@ -99,16 +117,58 @@ class SupabaseServiceRequestRepository(
         customerId: String?,
         clientSessionId: String?
     ): Result<ServiceRequest> = runCatching {
+        val rememberedIds = clientSessionStorage?.getRememberedRequestIds().orEmpty()
         val existing = remote.getById(requestId)
+            ?: clientSessionStorage?.getCachedRequests()
+                ?.firstOrNull { it.id == requestId }
+                ?.let { cached ->
+                    return@runCatching cancelAnonymousCachedRequest(
+                        cached,
+                        customerId,
+                        clientSessionId,
+                        rememberedIds
+                    )
+                }
             ?: throw NoSuchElementException("Request not found.")
-        assertCustomerOwnership(existing, customerId, clientSessionId)
+        assertCustomerOwnership(existing, customerId, clientSessionId, rememberedIds)
         val current = ServiceRequestStatus.valueOf(existing.status)
         if (!current.canTransitionTo(ServiceRequestStatus.CANCELLED)) {
             throw IllegalStateException("Cannot cancel request in status $current.")
         }
+        if (customerId.isNullOrBlank()) {
+            throw SecurityException(
+                "Sign in with Email OTP to cancel requests securely on the server."
+            )
+        }
         val dto = remote.updateStatus(requestId, ServiceRequestStatus.CANCELLED.name)
         ServiceRequestMapper.toDomain(dto)
             ?: throw IllegalStateException("Updated request has invalid data.")
+    }
+
+    private suspend fun cancelAnonymousCachedRequest(
+        cached: ServiceRequest,
+        customerId: String?,
+        clientSessionId: String?,
+        rememberedRequestIds: Set<String>
+    ): ServiceRequest {
+        val ownsBySession = !clientSessionId.isNullOrBlank() &&
+            cached.clientSessionId == clientSessionId
+        val ownsByRemembered = rememberedRequestIds.contains(cached.id)
+        if (!customerId.isNullOrBlank()) {
+            throw SecurityException("Request not found on server.")
+        }
+        if (!ownsBySession && !ownsByRemembered) {
+            throw SecurityException("You can only modify your own requests.")
+        }
+        if (!cached.status.canTransitionTo(ServiceRequestStatus.CANCELLED)) {
+            throw IllegalStateException("Cannot cancel request in status ${cached.status}.")
+        }
+        val updated = cached.copy(
+            status = ServiceRequestStatus.CANCELLED,
+            updatedAt = System.currentTimeMillis()
+        )
+        clientSessionStorage?.updateCachedRequest(updated)
+        return updated
     }
 
     private suspend fun updateForProvider(
@@ -131,12 +191,14 @@ class SupabaseServiceRequestRepository(
     private fun assertCustomerOwnership(
         dto: com.closeby.request.data.model.ServiceRequestDto,
         customerId: String?,
-        clientSessionId: String?
+        clientSessionId: String?,
+        rememberedRequestIds: Set<String>
     ) {
-        val ownsByAuth = customerId != null && dto.customerId == customerId
+        val ownsByAuth = !customerId.isNullOrBlank() && dto.customerId == customerId
         val ownsBySession = !clientSessionId.isNullOrBlank() &&
             dto.clientSessionId == clientSessionId
-        if (!ownsByAuth && !ownsBySession) {
+        val ownsByRemembered = rememberedRequestIds.contains(dto.id)
+        if (!ownsByAuth && !ownsBySession && !ownsByRemembered) {
             throw SecurityException("You can only modify your own requests.")
         }
     }
