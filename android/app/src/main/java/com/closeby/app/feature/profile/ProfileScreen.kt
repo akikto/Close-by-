@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,12 +32,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.closeby.app.core.di.AdminDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
-import com.closeby.feature.provider.presentation.AuthUiState
-import com.closeby.feature.provider.presentation.ProviderAuthViewModel
+import com.closeby.app.domain.auth.AuthState
+import com.closeby.feature.provider.presentation.AccountAuthViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ProfileScreen(
@@ -41,34 +45,62 @@ fun ProfileScreen(
     onMyAdvertisements: (String) -> Unit,
     onCreateAdvertisement: (String) -> Unit,
     onAdminDashboard: () -> Unit,
+    onMyRequests: () -> Unit = {},
+    onSavedServices: () -> Unit = {},
+    onRecentlyViewed: () -> Unit = {},
+    onSettings: () -> Unit = {},
+    onReportProblem: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val viewModel: ProviderAuthViewModel = viewModel(
+    val viewModel: AccountAuthViewModel = viewModel(
         factory = remember {
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    ProviderAuthViewModel(
+                    AccountAuthViewModel(
                         authRepository = ProviderDependenciesFactory.authRepository(),
                         providerRepository = ProviderDependenciesFactory.providerManagementRepository()
                     ) as T
             }
         }
     )
-    val authState by viewModel.uiState.collectAsState()
+    val authState by viewModel.authState.collectAsState()
     var isAdmin by remember { mutableStateOf<Boolean?>(null) }
     var email by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(authState) {
-        val signedIn = authState as? AuthUiState.SignedIn
+        val signedIn = authState as? AuthState.SignedIn
         isAdmin = if (signedIn != null) {
             withContext(Dispatchers.IO) {
-                AdminDependenciesFactory.adminRepository().isAdmin(signedIn.userId)
+                AdminDependenciesFactory.adminRepository().isAdmin(signedIn.session.userId)
             }
         } else {
             null
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete account?") },
+            text = {
+                Text(
+                    "This submits a deletion request. Your account will be deactivated after review. " +
+                        "You will be signed out immediately."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    viewModel.requestAccountDeletion()
+                }) { Text("Delete account") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Scaffold(modifier = modifier) { innerPadding ->
@@ -76,69 +108,62 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(20.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Profile", style = MaterialTheme.typography.headlineSmall)
+            Text("Account", style = MaterialTheme.typography.headlineSmall)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                "Browse services without signing in. Providers can sign in with Email OTP to manage listings.",
+                "Browse services without signing in. Sign in with Email OTP to manage your account.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
 
             when (val state = authState) {
-                is AuthUiState.SignedIn -> {
-                    Text("Signed in as ${state.email}", style = MaterialTheme.typography.bodyLarge)
+                is AuthState.SignedIn -> {
+                    val session = state.session
+                    Text("Signed in as ${session.email}", style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { onProviderProfile(state.providerId) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Provider Profile")
+
+                    state.providerId?.let { providerId ->
+                        AccountButton("Provider Profile") { onProviderProfile(providerId) }
+                        AccountButton("My Services") { onProviderProfile(providerId) }
+                        AccountOutlinedButton("Requests") { onMyRequests() }
                     }
+
+                    AccountButton("My Requests") { onMyRequests() }
+                    AccountButton("Saved Services") { onSavedServices() }
+                    AccountOutlinedButton("Recently Viewed") { onRecentlyViewed() }
+                    AccountOutlinedButton("My Advertisements") { onMyAdvertisements(session.userId) }
+                    AccountOutlinedButton("Create Advertisement") { onCreateAdvertisement(session.userId) }
+
                     if (isAdmin == true) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = onAdminDashboard,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text("Admin Dashboard")
-                        }
+                        AccountButton("Admin Dashboard") { onAdminDashboard() }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { onMyAdvertisements(state.userId) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("My Advertisements")
-                    }
+
+                    AccountOutlinedButton("Settings") { onSettings() }
+                    AccountOutlinedButton("Help") { /* placeholder */ }
+                    AccountOutlinedButton("Report a Problem") { onReportProblem() }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
-                        onClick = { onCreateAdvertisement(state.userId) },
+                        onClick = { showDeleteDialog = true },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Create Advertisement")
-                    }
+                    ) { Text("Delete Account") }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
                         onClick = viewModel::signOut,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Sign out")
-                    }
+                    ) { Text("Sign out") }
                 }
-                is AuthUiState.SendingOtp, is AuthUiState.Verifying -> {
+                AuthState.Loading, AuthState.OtpVerification -> {
                     CircularProgressIndicator()
                 }
-                is AuthUiState.AwaitingOtp -> {
+                is AuthState.OtpRequested -> {
                     OutlinedTextField(
                         value = otp,
                         onValueChange = { otp = it },
@@ -150,15 +175,13 @@ fun ProfileScreen(
                         onClick = { viewModel.verifyOtp(otp) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Verify & sign in")
-                    }
+                    ) { Text("Verify & sign in") }
                 }
-                else -> {
+                AuthState.SignedOut -> {
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Provider email") },
+                        label = { Text("Email") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -166,15 +189,38 @@ fun ProfileScreen(
                         onClick = { viewModel.sendOtp(email) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Text("Send Email OTP")
-                    }
-                    if (state is AuthUiState.Error) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(state.message, color = MaterialTheme.colorScheme.error)
-                    }
+                    ) { Text("Send Email OTP") }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Continue browsing without signing in.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                is AuthState.Error -> {
+                    Text(state.message, color = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = viewModel::clearError) { Text("Try again") }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun AccountButton(label: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) { Text(label) }
+}
+
+@Composable
+private fun AccountOutlinedButton(label: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        shape = RoundedCornerShape(14.dp)
+    ) { Text(label) }
 }

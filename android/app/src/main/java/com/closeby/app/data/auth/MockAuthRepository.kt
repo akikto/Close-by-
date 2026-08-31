@@ -1,5 +1,6 @@
 package com.closeby.app.data.auth
 
+import com.closeby.app.domain.auth.AccountDeletionRequest
 import com.closeby.app.domain.auth.AuthRepository
 import com.closeby.app.domain.auth.AuthSession
 
@@ -9,6 +10,7 @@ import com.closeby.app.domain.auth.AuthSession
 class MockAuthRepository : AuthRepository {
 
     private var session: AuthSession? = null
+    private var deletionRequested = false
 
     override suspend fun sendEmailOtp(email: String): Result<Unit> {
         if (email.isBlank() || !email.contains("@")) {
@@ -33,6 +35,23 @@ class MockAuthRepository : AuthRepository {
 
     override suspend fun signOut(): Result<Unit> {
         session = null
+        deletionRequested = false
         return Result.success(Unit)
+    }
+
+    override suspend fun requestAccountDeletion(reason: String?): Result<AccountDeletionRequest> {
+        val current = session ?: return Result.failure(IllegalStateException("Not signed in."))
+        if (deletionRequested) {
+            return Result.failure(IllegalStateException("Deletion already requested."))
+        }
+        deletionRequested = true
+        return Result.success(
+            AccountDeletionRequest(
+                id = "mock-deletion-${current.userId}",
+                userId = current.userId,
+                status = "PENDING",
+                requestedAt = System.currentTimeMillis()
+            )
+        )
     }
 }
