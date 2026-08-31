@@ -115,7 +115,7 @@ dependencies {
 
     // Supabase (Postgrest for PostgreSQL access; Auth reserved for later Email OTP work)
     implementation("io.github.jan-tennert.supabase:postgrest-kt:2.5.4")
-    implementation("io.github.jan-tennert.supabase:auth-kt:2.5.4")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt:2.5.4")
     implementation("io.ktor:ktor-client-android:2.3.12")
 
     // Location (for future nearby-search feature)
