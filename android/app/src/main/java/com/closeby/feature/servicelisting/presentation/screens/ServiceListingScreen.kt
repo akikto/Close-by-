@@ -51,7 +51,9 @@ fun ServiceListingScreen(
     modifier: Modifier = Modifier,
     showFullFilters: Boolean = true,
     maxListings: Int? = null,
-    showSearchBar: Boolean = true
+    showSearchBar: Boolean = true,
+    savedServiceIds: Set<String> = emptySet(),
+    onToggleSave: ((String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showFilterSheet by remember { mutableStateOf(false) }
@@ -128,7 +130,12 @@ fun ServiceListingScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(listings, key = { it.id }) { listing ->
-                        ServiceCard(listing = listing, onClick = onServiceClick)
+                        ServiceCard(
+                            listing = listing,
+                            onClick = onServiceClick,
+                            isSaved = listing.id in savedServiceIds,
+                            onToggleSave = onToggleSave?.let { toggle -> { toggle(listing.id) } }
+                        )
                     }
                     if (maxListings == null && state.hasMore) {
                         item {

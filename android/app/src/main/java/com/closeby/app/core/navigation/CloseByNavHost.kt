@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -25,6 +26,7 @@ import com.closeby.app.feature.admin.AdminUsersRoute
 import com.closeby.app.feature.admin.AdminVerificationRoute
 import com.closeby.app.feature.advertisement.CreateAdvertisementRoute
 import com.closeby.app.feature.advertisement.MyAdvertisementsRoute
+import com.closeby.app.feature.blocked.BlockedProvidersRoute
 import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
 import com.closeby.app.feature.notification.NotificationsRoute
@@ -96,8 +98,15 @@ fun CloseByNavHost(
                     }
                 },
                 onOpenAdvertisement = { _ ->
-                    navController.navigate(TopLevelDestination.Profile.route) {
-                        launchSingleTop = true
+                    val ownerId = runBlocking {
+                        ProviderDependenciesFactory.authRepository().getCurrentSession()?.userId
+                    }
+                    if (!ownerId.isNullOrBlank()) {
+                        navController.navigate(AppRoutes.myAdvertisements(ownerId))
+                    } else {
+                        navController.navigate(TopLevelDestination.Profile.route) {
+                            launchSingleTop = true
+                        }
                     }
                 },
                 onOpenAdmin = {
@@ -135,6 +144,9 @@ fun CloseByNavHost(
                 onRecentlyViewed = {
                     navController.navigate(AppRoutes.RECENTLY_VIEWED)
                 },
+                onBlockedProviders = {
+                    navController.navigate(AppRoutes.BLOCKED_PROVIDERS)
+                },
                 onReportProblem = {
                     navController.navigate(AppRoutes.report(ReportTargetType.SERVICE.name, "support"))
                 }
@@ -157,6 +169,10 @@ fun CloseByNavHost(
                     navController.navigate(AppRoutes.serviceDetails(serviceId))
                 }
             )
+        }
+
+        composable(AppRoutes.BLOCKED_PROVIDERS) {
+            BlockedProvidersRoute(onBack = { navController.popBackStack() })
         }
 
         composable(AppRoutes.ADMIN) {

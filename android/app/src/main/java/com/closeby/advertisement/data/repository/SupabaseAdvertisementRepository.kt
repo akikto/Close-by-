@@ -6,6 +6,7 @@ import com.closeby.advertisement.domain.model.AdStatus
 import com.closeby.advertisement.domain.model.Advertisement
 import com.closeby.advertisement.domain.model.AdvertisementInput
 import com.closeby.advertisement.domain.repository.AdvertisementRepository
+import com.closeby.notification.domain.handler.NotificationEventPublisher
 import com.closeby.advertisement.domain.validation.AdValidator
 import java.time.Instant
 
@@ -17,8 +18,10 @@ class SupabaseAdvertisementRepository(
         runCatching {
             AdValidator.validate(input).getOrThrow()
             val dto = remote.insert(AdvertisementMapper.toInsertDto(ownerId, input))
-            AdvertisementMapper.toDomain(dto)
+            val ad = AdvertisementMapper.toDomain(dto)
                 ?: throw IllegalStateException("Created advertisement has invalid data.")
+            NotificationEventPublisher.adSubmitted(ownerId, ad.id)
+            ad
         }
 
     override suspend fun getMyAds(ownerId: String): Result<List<Advertisement>> = runCatching {

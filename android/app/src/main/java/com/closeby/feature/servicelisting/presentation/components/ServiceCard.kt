@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
+import com.closeby.feature.servicelisting.presentation.components.SavedServiceToggle
 
 /**
  * Compact, mobile-friendly card summarizing a single service listing.
@@ -41,7 +42,9 @@ import com.closeby.feature.servicelisting.domain.model.ServiceListing
 fun ServiceCard(
     listing: ServiceListing,
     onClick: (ServiceListing) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSaved: Boolean = false,
+    onToggleSave: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
@@ -62,7 +65,7 @@ fun ServiceCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = listing.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -133,6 +136,10 @@ fun ServiceCard(
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
+            }
+
+            if (onToggleSave != null) {
+                SavedServiceToggle(isSaved = isSaved, onToggle = onToggleSave)
             }
         }
     }

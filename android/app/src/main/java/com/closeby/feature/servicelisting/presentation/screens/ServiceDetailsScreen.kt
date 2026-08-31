@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.closeby.feature.servicelisting.presentation.components.SavedServiceToggle
 import com.closeby.feature.servicelisting.presentation.components.ServiceListErrorState
 import com.closeby.feature.servicelisting.presentation.components.ServiceListLoadingState
 import com.closeby.feature.servicelisting.presentation.model.ServiceDetailsUiState
@@ -43,7 +44,9 @@ import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceDetailsV
 fun ServiceDetailsScreen(
     viewModel: ServiceDetailsViewModel,
     actions: ServiceDetailsActions,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSaved: Boolean = false,
+    onToggleSave: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -78,11 +81,21 @@ fun ServiceDetailsScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(top = 16.dp)
                 )
-                Text(
-                    text = "${listing.category.displayName} / ${listing.subcategory.displayName}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${listing.category.displayName} / ${listing.subcategory.displayName}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (onToggleSave != null) {
+                        SavedServiceToggle(isSaved = isSaved, onToggle = onToggleSave)
+                    }
+                }
 
                 Row(
                     modifier = Modifier.padding(top = 8.dp),
