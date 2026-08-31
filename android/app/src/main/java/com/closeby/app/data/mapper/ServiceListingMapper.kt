@@ -19,6 +19,9 @@ object ServiceListingMapper {
         val subcategory = parseSubcategory(dto.subcategory) ?: return null
         val availability = parseAvailability(dto.availability)
         val priceUnit = parsePriceUnit(dto.priceUnit)
+        val provider = dto.providers ?: return null
+
+        val price = dto.priceAmount?.let { amount ->
             PriceInfo(
                 amount = amount,
                 unit = priceUnit,
