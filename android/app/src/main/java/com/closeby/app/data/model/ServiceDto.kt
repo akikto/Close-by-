@@ -19,12 +19,14 @@ data class ServiceDto(
     val latitude: Double,
     val longitude: Double,
     val availability: String = "AVAILABLE_NOW",
-    @SerialName("price_amount") val priceAmount: Double,
-    @SerialName("price_unit") val priceUnit: String,
+    @SerialName("price_amount") val priceAmount: Double? = null,
+    @SerialName("price_unit") val priceUnit: String? = null,
     @SerialName("price_is_starting") val priceIsStarting: Boolean = false,
     val rating: Double = 0.0,
     @SerialName("review_count") val reviewCount: Int = 0,
     @SerialName("is_active") val isActive: Boolean = true,
+    @SerialName("contact_number") val contactNumber: String? = null,
+    @SerialName("deleted_at") val deletedAt: String? = null,
     val providers: ProviderEmbedDto? = null
 )
 

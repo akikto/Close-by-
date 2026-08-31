@@ -34,6 +34,19 @@ val topLevelDestinations = listOf(
 
 object AppRoutes {
     const val SERVICE_DETAILS = "service/{serviceId}"
+    const val PROVIDER_PROFILE = "provider/{providerId}"
+    const val MY_SERVICES = "provider/my-services/{providerId}"
+    const val ADD_SERVICE = "provider/add-service/{providerId}"
+    const val EDIT_SERVICE = "provider/edit-service/{providerId}/{serviceId}"
+    const val PROVIDER_REQUESTS = "provider/requests/{providerId}"
+    const val EDIT_AVAILABILITY = "provider/availability/{providerId}"
 
     fun serviceDetails(serviceId: String): String = "service/$serviceId"
+    fun providerProfile(providerId: String): String = "provider/$providerId"
+    fun myServices(providerId: String): String = "provider/my-services/$providerId"
+    fun addService(providerId: String): String = "provider/add-service/$providerId"
+    fun editService(providerId: String, serviceId: String): String =
+        "provider/edit-service/$providerId/$serviceId"
+    fun providerRequests(providerId: String): String = "provider/requests/$providerId"
+    fun editAvailability(providerId: String): String = "provider/availability/$providerId"
 }

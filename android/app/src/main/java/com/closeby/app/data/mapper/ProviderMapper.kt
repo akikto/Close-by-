@@ -13,7 +13,7 @@ fun ProviderDto.toDomain(): Provider = Provider(
     id = id,
     name = name,
     category = parseCategory(category),
-    phoneNumber = phone_number,
+    phoneNumber = phoneNumber,
     latitude = latitude,
     longitude = longitude
 )

@@ -16,6 +16,8 @@ data class ServiceRequest(
     val serviceId: String,
     val providerId: String,
     val customerId: String?,
+    val customerName: String? = null,
+    val customerPhone: String? = null,
     val serviceTitle: String,
     val requestedDate: LocalDate,
     val startTime: LocalTime,
