@@ -12,7 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -115,12 +118,32 @@ fun ServiceListingScreen(
                 val listings = maxListings?.let { limit ->
                     state.listings.take(limit)
                 } ?: state.listings
+                Text(
+                    text = "${state.totalCount} services found",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(listings, key = { it.id }) { listing ->
                         ServiceCard(listing = listing, onClick = onServiceClick)
+                    }
+                    if (maxListings == null && state.hasMore) {
+                        item {
+                            Button(
+                                onClick = viewModel::loadMore,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !state.isLoadingMore
+                            ) {
+                                if (state.isLoadingMore) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    Text("Load more")
+                                }
+                            }
+                        }
                     }
                 }
             }

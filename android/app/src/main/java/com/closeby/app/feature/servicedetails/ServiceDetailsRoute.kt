@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.NearbyDependenciesFactory
+import com.closeby.app.core.di.SavedDependenciesFactory
 import com.closeby.contact.data.AndroidContactLauncher
 import com.closeby.feature.servicelisting.presentation.screens.ServiceDetailsScreen
 import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceDetailsActions
@@ -30,6 +32,11 @@ fun ServiceDetailsRoute(
     )
     val snackbarHostState = remember { SnackbarHostState() }
     val contactLauncher = remember { AndroidContactLauncher(context) }
+    val historyRepository = remember(context) { SavedDependenciesFactory.recentlyViewedRepository(context) }
+
+    LaunchedEffect(serviceId) {
+        historyRepository.recordView(serviceId)
+    }
 
     androidx.compose.material3.Scaffold(
         modifier = modifier,

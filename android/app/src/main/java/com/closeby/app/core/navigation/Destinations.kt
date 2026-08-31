@@ -60,6 +60,11 @@ object AppRoutes {
     const val ADMIN_SERVICES = "admin/services"
     const val ADMIN_USERS = "admin/users"
 
+    const val SAVED_SERVICES = "saved-services"
+    const val RECENTLY_VIEWED = "recently-viewed"
+    const val BLOCKED_PROVIDERS = "blocked-providers"
+    const val SETTINGS = "settings"
+
     fun serviceDetails(serviceId: String): String = "service/$serviceId"
     fun createRequest(serviceId: String): String = "service/$serviceId/request"
     fun requestDetails(requestId: String): String = "request/$requestId"

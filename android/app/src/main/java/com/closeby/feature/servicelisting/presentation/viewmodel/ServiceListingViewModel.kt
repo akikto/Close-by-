@@ -14,25 +14,24 @@ import com.closeby.feature.servicelisting.domain.usecase.SearchServicesUseCase
 import com.closeby.feature.servicelisting.domain.usecase.SortServicesUseCase
 import com.closeby.feature.servicelisting.presentation.model.EmptyReason
 import com.closeby.feature.servicelisting.presentation.model.ServiceListUiState
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the Service Listing screen.
- *
- * Architecture: UI -> ViewModel -> UseCase -> Repository interface.
- * No business logic lives in Composables; this class owns all listing
- * state transitions (loading / success / empty / error).
- */
+@OptIn(FlowPreview::class)
 class ServiceListingViewModel(
     private val serviceRepository: ServiceRepository,
     private val locationProvider: LocationProvider,
     private val blockedProviderIdsProvider: suspend () -> Set<String> = { emptySet() },
     private val searchServicesUseCase: SearchServicesUseCase = SearchServicesUseCase(),
     private val filterServicesUseCase: FilterServicesUseCase = FilterServicesUseCase(),
-    private val sortServicesUseCase: SortServicesUseCase = SortServicesUseCase(locationProvider)
+    private val sortServicesUseCase: SortServicesUseCase = SortServicesUseCase(locationProvider),
+    private val pageSize: Int = PAGE_SIZE
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ServiceListUiState>(ServiceListUiState.Loading)
@@ -43,9 +42,13 @@ class ServiceListingViewModel(
         _locationStatus.asStateFlow()
 
     private var allListings: List<ServiceListing> = emptyList()
+    private var processedListings: List<ServiceListing> = emptyList()
+    private var displayedCount: Int = pageSize
     private var currentQuery: String = ""
     private var currentFilter: ServiceFilter = ServiceFilter()
     private var currentSort: SortOption = SortOption.DEFAULT
+    private val queryFlow = MutableStateFlow("")
+    private var searchJob: Job? = null
 
     init {
         locationProvider.start(viewModelScope)
@@ -60,6 +63,16 @@ class ServiceListingViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            queryFlow
+                .debounce(SEARCH_DEBOUNCE_MS)
+                .distinctUntilChanged()
+                .collect { debounced ->
+                    currentQuery = debounced
+                    displayedCount = pageSize
+                    applyPipeline()
+                }
+        }
         loadServices()
     }
 
@@ -69,6 +82,7 @@ class ServiceListingViewModel(
 
     fun loadServices() {
         _uiState.value = ServiceListUiState.Loading
+        displayedCount = pageSize
         viewModelScope.launch {
             serviceRepository.fetchServices()
                 .onSuccess { listings ->
@@ -90,38 +104,50 @@ class ServiceListingViewModel(
     fun retry() = loadServices()
 
     fun onQueryChanged(query: String) {
-        currentQuery = query
-        applyPipelineSync()
+        queryFlow.value = query
+    }
+
+    fun loadMore() {
+        val current = _uiState.value as? ServiceListUiState.Success ?: return
+        if (!current.hasMore || current.isLoadingMore) return
+        _uiState.value = current.copy(isLoadingMore = true)
+        displayedCount += pageSize
+        publishSuccess()
     }
 
     fun onCategorySelected(category: ServiceCategory?) {
         currentFilter = currentFilter.copy(category = category, subcategory = null)
+        displayedCount = pageSize
         applyPipelineSync()
     }
 
     fun onSubcategorySelected(subcategory: ServiceSubcategory?) {
         currentFilter = currentFilter.copy(subcategory = subcategory)
+        displayedCount = pageSize
         applyPipelineSync()
     }
 
     fun onFilterChanged(filter: ServiceFilter) {
         currentFilter = filter
+        displayedCount = pageSize
         applyPipelineSync()
     }
 
     fun onSortChanged(sortOption: SortOption) {
         currentSort = sortOption
+        displayedCount = pageSize
         applyPipelineSync()
     }
 
     fun clearFilters() {
         currentFilter = ServiceFilter()
+        displayedCount = pageSize
         applyPipelineSync()
     }
 
-    /** Synchronous pipeline for search/filter (no distance recompute needed). */
     private fun applyPipelineSync() {
-        viewModelScope.launch { applyPipeline() }
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch { applyPipeline() }
     }
 
     private suspend fun applyPipeline() {
@@ -136,18 +162,46 @@ class ServiceListingViewModel(
 
         val searched = searchServicesUseCase(allListings, currentQuery)
         val filtered = filterServicesUseCase(searched, currentFilter)
-        val sorted = sortServicesUseCase(filtered, currentSort)
+        val sort = resolveSortOption()
+        processedListings = sortServicesUseCase(filtered, sort)
 
-        if (sorted.isEmpty()) {
+        if (processedListings.isEmpty()) {
             val reason = when {
                 currentQuery.isNotBlank() -> EmptyReason.NO_SEARCH_RESULTS
-                currentFilter.radiusKm != null -> EmptyReason.NO_SERVICES_IN_RADIUS
+                currentFilter.effectiveRadiusKm != null -> EmptyReason.NO_SERVICES_IN_RADIUS
                 currentFilter.category != null -> EmptyReason.NO_SERVICES_IN_CATEGORY
                 else -> EmptyReason.NO_SERVICES_AVAILABLE
             }
             _uiState.value = ServiceListUiState.Empty(reason, currentQuery, currentFilter)
         } else {
-            _uiState.value = ServiceListUiState.Success(sorted, currentQuery, currentFilter, currentSort)
+            publishSuccess()
         }
+    }
+
+    private fun resolveSortOption(): SortOption {
+        if (currentSort == SortOption.NEAREST_FIRST &&
+            _locationStatus.value == com.closeby.feature.servicelisting.domain.model.LocationStatus.UNAVAILABLE
+        ) {
+            return SortOption.NEWEST
+        }
+        return currentSort
+    }
+
+    private fun publishSuccess() {
+        val page = processedListings.take(displayedCount)
+        _uiState.value = ServiceListUiState.Success(
+            listings = page,
+            query = currentQuery,
+            filter = currentFilter,
+            sortOption = currentSort,
+            totalCount = processedListings.size,
+            hasMore = displayedCount < processedListings.size,
+            isLoadingMore = false
+        )
+    }
+
+    companion object {
+        const val PAGE_SIZE = 20
+        const val SEARCH_DEBOUNCE_MS = 300L
     }
 }

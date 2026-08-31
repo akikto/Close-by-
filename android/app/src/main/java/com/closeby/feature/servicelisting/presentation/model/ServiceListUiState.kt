@@ -16,7 +16,10 @@ sealed interface ServiceListUiState {
         val listings: List<ServiceListing>,
         val query: String = "",
         val filter: ServiceFilter = ServiceFilter(),
-        val sortOption: SortOption = SortOption.DEFAULT
+        val sortOption: SortOption = SortOption.DEFAULT,
+        val totalCount: Int = listings.size,
+        val hasMore: Boolean = false,
+        val isLoadingMore: Boolean = false
     ) : ServiceListUiState
 
     data class Empty(

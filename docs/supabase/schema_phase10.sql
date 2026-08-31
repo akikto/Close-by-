@@ -1,0 +1,4 @@
+-- Close by — Phase 10: Advanced discovery
+-- Apply after schema_phase9.sql.
+-- Phase 10 discovery improvements are primarily client-side (search debounce,
+-- pagination, filters). No schema changes required at this time.
