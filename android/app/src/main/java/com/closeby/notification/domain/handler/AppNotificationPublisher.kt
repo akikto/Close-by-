@@ -18,7 +18,7 @@ object AppNotificationPublisher {
         type: NotificationType,
         title: String,
         body: String,
-        referenceType: NotificationReferenceType? = null,
+        referenceType: String? = null,
         referenceId: String? = null
     ) {
         val notification = AppNotification(
