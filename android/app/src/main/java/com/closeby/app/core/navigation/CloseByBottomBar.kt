@@ -1,5 +1,7 @@
 package com.closeby.app.core.navigation
 
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -13,7 +15,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
-fun CloseByBottomBar(navController: NavHostController) {
+fun CloseByBottomBar(
+    navController: NavHostController,
+    notificationsUnreadCount: Int = 0
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination: NavDestination? = navBackStackEntry?.destination
 
@@ -31,7 +36,24 @@ fun CloseByBottomBar(navController: NavHostController) {
                         restoreState = true
                     }
                 },
-                icon = { Icon(destination.icon, contentDescription = destination.label) },
+                icon = {
+                    if (destination == TopLevelDestination.Notifications && notificationsUnreadCount > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge {
+                                    Text(
+                                        text = if (notificationsUnreadCount > 99) "99+"
+                                        else notificationsUnreadCount.toString()
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(destination.icon, contentDescription = destination.label)
+                        }
+                    } else {
+                        Icon(destination.icon, contentDescription = destination.label)
+                    }
+                },
                 label = { Text(destination.label) }
             )
         }
