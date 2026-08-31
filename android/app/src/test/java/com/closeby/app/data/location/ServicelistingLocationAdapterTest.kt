@@ -12,6 +12,8 @@ import com.closeby.feature.servicelisting.domain.model.PriceUnit
 import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.feature.servicelisting.domain.model.ServiceSubcategory
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
