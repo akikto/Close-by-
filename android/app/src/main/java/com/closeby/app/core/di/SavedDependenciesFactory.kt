@@ -9,6 +9,7 @@ import com.closeby.feature.servicelisting.data.local.LocalSavedServiceRepository
 import com.closeby.feature.servicelisting.data.local.SavedServiceSyncQueue
 import com.closeby.feature.servicelisting.data.repository.OfflineAwareSavedServiceRepository
 import com.closeby.feature.servicelisting.domain.repository.RecentlyViewedRepository
+import com.closeby.feature.servicelisting.domain.repository.SavedServiceRepository
 import com.closeby.app.feature.saved.SavedServiceMigrationManager
 import com.closeby.feature.servicelisting.presentation.viewmodel.SavedServiceToggleViewModel
 

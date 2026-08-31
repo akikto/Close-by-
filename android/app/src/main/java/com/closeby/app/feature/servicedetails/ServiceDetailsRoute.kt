@@ -16,7 +16,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.NearbyDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.app.core.di.SavedDependenciesFactory
-import com.closeby.app.core.di.SavedDependenciesFactory
 import com.closeby.contact.data.AndroidContactLauncher
 import com.closeby.feature.servicelisting.presentation.screens.ServiceDetailsScreen
 import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceDetailsActions
