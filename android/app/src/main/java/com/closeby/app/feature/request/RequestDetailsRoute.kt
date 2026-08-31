@@ -1,4 +1,4 @@
-package com.closeby.app.feature.provider
+package com.closeby.app.feature.request
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,9 +11,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,49 +27,45 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.contact.data.AndroidContactLauncher
-import com.closeby.request.presentation.ProviderRequestsViewModel
-import com.closeby.request.ui.ProviderRequestsScreen
+import com.closeby.request.presentation.RequestDetailsViewModel
+import com.closeby.request.ui.RequestDetailsScreen
 import com.closeby.util.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProviderRequestsRoute(
-    providerId: String,
+fun RequestDetailsRoute(
+    requestId: String,
+    providerId: String? = null,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val contactLauncher = remember { AndroidContactLauncher(context) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val viewModel: ProviderRequestsViewModel = viewModel(
-        factory = remember(providerId) {
+    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+    val viewModel: RequestDetailsViewModel = viewModel(
+        factory = remember(requestId, providerId) {
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    ProviderRequestsViewModel(
+                    RequestDetailsViewModel(
+                        requestId = requestId,
+                        customerId = null,
                         providerId = providerId,
-                        repository = ProviderDependenciesFactory.serviceRequestRepository(context)
+                        repository = ProviderDependenciesFactory.serviceRequestRepository(context),
+                        clientSessionStorage = ProviderDependenciesFactory.clientSessionStorage(context)
                     ) as T
             }
         }
     )
     val uiState by viewModel.uiState.collectAsState()
-    val actionMessage by viewModel.actionMessage.collectAsState()
 
-    LaunchedEffect(providerId) { viewModel.loadRequests() }
-    LaunchedEffect(actionMessage) {
-        actionMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.consumeActionMessage()
-        }
-    }
+    LaunchedEffect(requestId) { viewModel.load() }
 
     Scaffold(
         modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Provider Requests") },
+                title = { Text("Request Details") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -82,15 +77,22 @@ fun ProviderRequestsRoute(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val state = uiState) {
                 is UiState.Idle, is UiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                is UiState.Success -> ProviderRequestsScreen(
-                    requests = state.data,
+                is UiState.Success -> RequestDetailsScreen(
+                    request = state.data,
+                    isProviderView = providerId != null,
+                    contactLauncher = contactLauncher,
+                    snackbarHostState = snackbarHostState,
+                    onCancel = viewModel::cancel,
                     onAccept = viewModel::accept,
                     onReject = viewModel::reject,
-                    onComplete = viewModel::complete,
-                    contactLauncher = contactLauncher,
-                    snackbarHostState = snackbarHostState
+                    onComplete = viewModel::complete
                 )
-                is UiState.Error -> Text(state.message, modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.bodyMedium)
+                is UiState.Error -> {
+                    Text(state.message, modifier = Modifier.align(Alignment.Center))
+                    TextButton(onClick = viewModel::load, modifier = Modifier.align(Alignment.Center)) {
+                        Text("Retry")
+                    }
+                }
             }
         }
     }

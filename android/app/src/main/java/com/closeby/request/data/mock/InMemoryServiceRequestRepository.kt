@@ -4,17 +4,14 @@ import com.closeby.request.domain.model.BudgetUnit
 import com.closeby.request.domain.model.ServiceRequest
 import com.closeby.request.domain.model.ServiceRequestStatus
 import com.closeby.request.domain.repository.ServiceRequestRepository
+import com.closeby.request.domain.validation.ServiceRequestValidator
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * ⚠️ TEMPORARY MOCK — in-memory only, resets on process death, and does
- * NOT enforce authorization (any caller can accept/reject any request).
- * This exists only so the Requests tab is demoable before a real
- * Supabase-backed [ServiceRequestRepository] is wired in by the base
- * project (see Agent 5's INTEGRATION_NOTES.md — authorization MUST be
- * enforced server-side in the real implementation).
+ * In-memory fallback when Supabase credentials are not configured.
+ * Enforces status transitions and basic ownership for local development.
  */
 class InMemoryServiceRequestRepository : ServiceRequestRepository {
 
@@ -25,42 +22,75 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
         return Result.success(request)
     }
 
-    override suspend fun getCustomerRequests(customerId: String?): Result<List<ServiceRequest>> =
-        Result.success(requests.filter { it.customerId == customerId })
+    override suspend fun getCustomerRequests(
+        customerId: String?,
+        clientSessionId: String?
+    ): Result<List<ServiceRequest>> = Result.success(
+        requests.filter { request ->
+            (customerId != null && request.customerId == customerId) ||
+                (!clientSessionId.isNullOrBlank() && request.clientSessionId == clientSessionId)
+        }
+    )
 
     override suspend fun getProviderRequests(providerId: String): Result<List<ServiceRequest>> =
         Result.success(requests.filter { it.providerId == providerId })
 
+    override suspend fun getRequestById(requestId: String): Result<ServiceRequest> {
+        val found = requests.firstOrNull { it.id == requestId }
+            ?: return Result.failure(NoSuchElementException("Request not found."))
+        return Result.success(found)
+    }
+
     override suspend fun acceptRequest(requestId: String, providerId: String): Result<ServiceRequest> =
-        updateStatus(requestId, ServiceRequestStatus.ACCEPTED)
+        updateForProvider(requestId, providerId, ServiceRequestStatus.ACCEPTED)
 
     override suspend fun rejectRequest(requestId: String, providerId: String): Result<ServiceRequest> =
-        updateStatus(requestId, ServiceRequestStatus.REJECTED)
+        updateForProvider(requestId, providerId, ServiceRequestStatus.REJECTED)
 
-    override suspend fun completeRequest(requestId: String): Result<ServiceRequest> =
-        updateStatus(requestId, ServiceRequestStatus.COMPLETED)
+    override suspend fun completeRequest(requestId: String, providerId: String): Result<ServiceRequest> =
+        updateForProvider(requestId, providerId, ServiceRequestStatus.COMPLETED)
 
-    override suspend fun cancelRequest(requestId: String): Result<ServiceRequest> =
-        updateStatus(requestId, ServiceRequestStatus.CANCELLED)
-
-    private fun updateStatus(requestId: String, status: ServiceRequestStatus): Result<ServiceRequest> {
+    override suspend fun cancelRequest(
+        requestId: String,
+        customerId: String?,
+        clientSessionId: String?
+    ): Result<ServiceRequest> = runCatching {
         val index = requests.indexOfFirst { it.id == requestId }
-        if (index == -1) return Result.failure(NoSuchElementException("No request found for id=$requestId"))
+        if (index == -1) throw NoSuchElementException("Request not found.")
         val current = requests[index]
-        if (!current.status.canTransitionTo(status)) {
-            return Result.failure(IllegalStateException("Cannot transition ${current.status} -> $status"))
+        val owns = (customerId != null && current.customerId == customerId) ||
+            (!clientSessionId.isNullOrBlank() && current.clientSessionId == clientSessionId)
+        if (!owns) throw SecurityException("Not your request.")
+        if (!current.status.canTransitionTo(ServiceRequestStatus.CANCELLED)) {
+            throw IllegalStateException("Cannot cancel in status ${current.status}.")
         }
+        val updated = current.copy(status = ServiceRequestStatus.CANCELLED, updatedAt = System.currentTimeMillis())
+        requests[index] = updated
+        updated
+    }
+
+    private fun updateForProvider(
+        requestId: String,
+        providerId: String,
+        status: ServiceRequestStatus
+    ): Result<ServiceRequest> = runCatching {
+        val index = requests.indexOfFirst { it.id == requestId }
+        if (index == -1) throw NoSuchElementException("Request not found.")
+        val current = requests[index]
+        if (current.providerId != providerId) throw SecurityException("Not your request.")
+        ServiceRequestValidator.validateStatusTransition(current.status, status).getOrThrow()
         val updated = current.copy(status = status, updatedAt = System.currentTimeMillis())
         requests[index] = updated
-        return Result.success(updated)
+        updated
     }
 
     private fun sampleRequests(): List<ServiceRequest> {
         val now = System.currentTimeMillis()
+        val session = "demo-session"
         return listOf(
             ServiceRequest(
                 id = "req_001",
-                serviceId = "svc_001",
+                serviceId = "22222222-2222-2222-2222-222222222201",
                 providerId = "11111111-1111-1111-1111-111111111101",
                 customerId = null,
                 customerName = "Anita",
@@ -72,13 +102,16 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
                 duration = "3 hours",
                 budgetAmount = 900.0,
                 budgetUnit = BudgetUnit.DAY,
+                clientSessionId = session,
+                providerName = "Ravi Kumar",
+                providerPhone = "+910000000001",
                 status = ServiceRequestStatus.PENDING,
                 createdAt = now,
                 updatedAt = now
             ),
             ServiceRequest(
                 id = "req_002",
-                serviceId = "svc_002",
+                serviceId = "22222222-2222-2222-2222-222222222202",
                 providerId = "11111111-1111-1111-1111-111111111101",
                 customerId = null,
                 customerName = "Rahul",
@@ -90,6 +123,9 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
                 duration = "2 hours",
                 budgetAmount = 500.0,
                 budgetUnit = BudgetUnit.JOB,
+                clientSessionId = session,
+                providerName = "Suresh Electricals",
+                providerPhone = "+910000000002",
                 status = ServiceRequestStatus.ACCEPTED,
                 createdAt = now,
                 updatedAt = now

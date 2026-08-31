@@ -60,5 +60,6 @@ interface ServiceDetailsActions {
     fun onCallProvider(phoneNumber: String)
     fun onSmsProvider(phoneNumber: String)
     fun onViewProviderProfile(providerId: String)
+    fun onRequestService(serviceId: String, providerId: String, serviceTitle: String, providerName: String, providerPhone: String)
     fun onBack()
 }

@@ -60,7 +60,7 @@ class ProviderRequestsViewModel(
 
     fun complete(requestId: String) {
         viewModelScope.launch {
-            repository.completeRequest(requestId)
+            repository.completeRequest(requestId, providerId)
                 .onSuccess { loadRequests() }
                 .onFailure { error ->
                     _actionMessage.value = error.message ?: "Could not complete request."

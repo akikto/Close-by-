@@ -38,6 +38,9 @@ object ServiceRequestMapper {
             budgetUnit = budgetUnit,
             note = dto.note,
             status = status,
+            clientSessionId = dto.clientSessionId,
+            providerName = dto.providerName,
+            providerPhone = dto.providerPhone,
             createdAt = Instant.parse(dto.createdAt).toEpochMilli(),
             updatedAt = Instant.parse(dto.updatedAt).toEpochMilli()
         )
@@ -45,6 +48,7 @@ object ServiceRequestMapper {
 
     fun toInsertDto(request: ServiceRequest): ServiceRequestInsertDto =
         ServiceRequestInsertDto(
+            id = request.id,
             serviceId = request.serviceId,
             providerId = request.providerId,
             customerId = request.customerId,
@@ -59,7 +63,10 @@ object ServiceRequestMapper {
             budgetCurrency = request.budgetCurrency,
             budgetUnit = request.budgetUnit?.name,
             note = request.note,
-            status = request.status.name
+            status = request.status.name,
+            clientSessionId = request.clientSessionId,
+            providerName = request.providerName,
+            providerPhone = request.providerPhone
         )
 
     private fun parseStatus(raw: String): ServiceRequestStatus? =

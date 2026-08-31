@@ -41,7 +41,15 @@ object AppRoutes {
     const val PROVIDER_REQUESTS = "provider/requests/{providerId}"
     const val EDIT_AVAILABILITY = "provider/availability/{providerId}"
 
+    const val CREATE_REQUEST = "service/{serviceId}/request"
+    const val REQUEST_DETAILS = "request/{requestId}"
+    const val PROVIDER_REQUEST_DETAILS = "provider/{providerId}/request/{requestId}"
+
     fun serviceDetails(serviceId: String): String = "service/$serviceId"
+    fun createRequest(serviceId: String): String = "service/$serviceId/request"
+    fun requestDetails(requestId: String): String = "request/$requestId"
+    fun providerRequestDetails(providerId: String, requestId: String): String =
+        "provider/$providerId/request/$requestId"
     fun providerProfile(providerId: String): String = "provider/$providerId"
     fun myServices(providerId: String): String = "provider/my-services/$providerId"
     fun addService(providerId: String): String = "provider/add-service/$providerId"

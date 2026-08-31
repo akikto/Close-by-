@@ -2,6 +2,8 @@ package com.closeby.app.core.di
 
 import android.content.Context
 import com.closeby.app.BuildConfig
+import com.closeby.app.core.session.AndroidClientSessionStorage
+import com.closeby.app.core.session.ClientSessionStorage
 import com.closeby.app.data.auth.MockAuthRepository
 import com.closeby.app.data.auth.SupabaseAuthRepository
 import com.closeby.app.data.storage.MockServiceImageUploader
@@ -36,8 +38,19 @@ object ProviderDependenciesFactory {
             MockProviderManagementRepository()
         }
 
-    fun serviceRequestRepository(): ServiceRequestRepository =
-        if (hasSupabase) SupabaseServiceRequestRepository() else InMemoryServiceRequestRepository()
+    fun clientSessionStorage(context: Context): ClientSessionStorage =
+        AndroidClientSessionStorage(context.applicationContext)
+
+    fun serviceRequestRepository(context: Context): ServiceRequestRepository =
+        if (hasSupabase) {
+            SupabaseServiceRequestRepository(
+                serviceRepository = ServiceRepositoryFactory.create(),
+                availabilityRepository = availabilityRepository(),
+                clientSessionStorage = clientSessionStorage(context)
+            )
+        } else {
+            InMemoryServiceRequestRepository()
+        }
 
     fun imageUploader(context: Context): ServiceImageUploader =
         if (hasSupabase) SupabaseServiceImageUploader(context.applicationContext)

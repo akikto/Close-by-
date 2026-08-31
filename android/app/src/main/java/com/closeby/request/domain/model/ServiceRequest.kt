@@ -27,6 +27,9 @@ data class ServiceRequest(
     val budgetCurrency: String = "INR",
     val budgetUnit: BudgetUnit? = null,
     val note: String? = null,
+    val clientSessionId: String? = null,
+    val providerName: String? = null,
+    val providerPhone: String? = null,
     val status: ServiceRequestStatus = ServiceRequestStatus.PENDING,
     val createdAt: Long,
     val updatedAt: Long

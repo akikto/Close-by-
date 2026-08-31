@@ -21,6 +21,7 @@ class ServiceRequestValidatorTest {
             date = today,
             startTime = LocalTime.of(9, 0),
             endTime = LocalTime.of(17, 0),
+            duration = "1 Day",
             budgetAmount = 400.0,
             today = today
         )

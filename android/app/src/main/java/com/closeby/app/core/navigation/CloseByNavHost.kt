@@ -16,6 +16,8 @@ import com.closeby.app.feature.provider.AvailabilityEditorRoute
 import com.closeby.app.feature.provider.MyServicesRoute
 import com.closeby.app.feature.provider.ProviderProfileRoute
 import com.closeby.app.feature.provider.ProviderRequestsRoute
+import com.closeby.app.feature.request.CreateServiceRequestRoute
+import com.closeby.app.feature.request.RequestDetailsRoute
 import com.closeby.app.feature.request.RequestsScreen
 import com.closeby.app.feature.servicedetails.ServiceDetailsRoute
 
@@ -48,7 +50,13 @@ fun CloseByNavHost(
                 }
             )
         }
-        composable(TopLevelDestination.Requests.route) { RequestsScreen() }
+        composable(TopLevelDestination.Requests.route) {
+            RequestsScreen(
+                onOpenRequestDetails = { requestId ->
+                    navController.navigate(AppRoutes.requestDetails(requestId))
+                }
+            )
+        }
         composable(TopLevelDestination.Notifications.route) { NotificationsScreen() }
         composable(TopLevelDestination.Profile.route) {
             ProfileScreen(
@@ -68,7 +76,54 @@ fun CloseByNavHost(
                 onBack = { navController.popBackStack() },
                 onViewProviderProfile = { providerId ->
                     navController.navigate(AppRoutes.providerProfile(providerId))
+                },
+                onRequestService = { id ->
+                    navController.navigate(AppRoutes.createRequest(id))
                 }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CREATE_REQUEST,
+            arguments = listOf(navArgument("serviceId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val serviceId = backStackEntry.arguments?.getString("serviceId").orEmpty()
+            CreateServiceRequestRoute(
+                serviceId = serviceId,
+                onBack = { navController.popBackStack() },
+                onRequestCreated = {
+                    navController.popBackStack()
+                    navController.navigate(TopLevelDestination.Requests.route) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.REQUEST_DETAILS,
+            arguments = listOf(navArgument("requestId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val requestId = backStackEntry.arguments?.getString("requestId").orEmpty()
+            RequestDetailsRoute(
+                requestId = requestId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.PROVIDER_REQUEST_DETAILS,
+            arguments = listOf(
+                navArgument("providerId") { type = NavType.StringType },
+                navArgument("requestId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            val requestId = backStackEntry.arguments?.getString("requestId").orEmpty()
+            RequestDetailsRoute(
+                requestId = requestId,
+                providerId = providerId,
+                onBack = { navController.popBackStack() }
             )
         }
 
