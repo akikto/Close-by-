@@ -22,7 +22,7 @@ object ProviderProfileMapper {
         distanceLabel: String?,
         isOwnProfile: Boolean
     ): ProviderProfile? {
-        val category = parseCategory(provider.category) ?: return null
+        val category = ManagedServiceMapper.parseCategory(provider.category) ?: return null
         return ProviderProfile(
             id = provider.id,
             name = provider.name,
@@ -41,6 +41,9 @@ object ProviderProfileMapper {
 }
 
 object ManagedServiceMapper {
+
+    fun parseCategory(raw: String): ServiceCategory? =
+        runCatching { ServiceCategory.valueOf(raw.trim().uppercase()) }.getOrNull()
 
     fun toDomain(dto: ServiceDto): ManagedService? {
         val category = parseCategory(dto.category) ?: return null
@@ -131,7 +134,7 @@ object ManagedServiceMapper {
         )
 
     private fun parseCategory(raw: String): ServiceCategory? =
-        runCatching { ServiceCategory.valueOf(raw.trim().uppercase()) }.getOrNull()
+        ManagedServiceMapper.parseCategory(raw)
 
     private fun parseSubcategory(raw: String): ServiceSubcategory? =
         runCatching { ServiceSubcategory.valueOf(raw.trim().uppercase()) }.getOrNull()

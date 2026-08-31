@@ -23,8 +23,10 @@ class SupabaseAvailabilityRepository(
 
     override suspend fun saveAvailability(availability: List<ProviderAvailability>): Result<Unit> =
         runCatching {
+            val providerId = availability.firstOrNull()?.providerId
+                ?: throw IllegalArgumentException("No availability entries.")
             val dtos = availability.map(AvailabilityMapper::toUpsertDto)
-            remote.upsertAll(dtos)
+            remote.replaceAll(providerId, dtos)
         }
 
     override suspend fun isAvailable(

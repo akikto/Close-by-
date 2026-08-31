@@ -13,10 +13,11 @@ class AvailabilityRemoteDataSource(
             .select { filter { eq("provider_id", providerId) } }
             .decodeList<ProviderAvailabilityDto>()
 
-    suspend fun upsertAll(entries: List<ProviderAvailabilityUpsertDto>) {
+    suspend fun replaceAll(providerId: String, entries: List<ProviderAvailabilityUpsertDto>) {
         client.from("provider_availability")
-            .upsert(entries) {
-                onConflict = "provider_id,day_of_week"
-            }
+            .delete { filter { eq("provider_id", providerId) } }
+        if (entries.isNotEmpty()) {
+            client.from("provider_availability").insert(entries)
+        }
     }
 }

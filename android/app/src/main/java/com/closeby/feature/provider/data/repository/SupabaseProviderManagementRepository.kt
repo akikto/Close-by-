@@ -16,6 +16,7 @@ import com.closeby.app.data.model.ProviderUpdateDto
 import com.closeby.feature.nearby.model.Coordinates
 import com.closeby.feature.nearby.util.DistanceCalculator
 import com.closeby.feature.nearby.util.DistanceFormatter
+import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 
 class SupabaseProviderManagementRepository(
     private val remote: ProviderManagementRemoteDataSource = ProviderManagementRemoteDataSource(),

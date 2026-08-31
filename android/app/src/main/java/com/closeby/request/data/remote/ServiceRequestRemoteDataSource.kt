@@ -20,18 +20,16 @@ class ServiceRequestRemoteDataSource(
             .select { filter { eq("provider_id", providerId) } }
             .decodeList<ServiceRequestDto>()
 
-    suspend fun getByCustomer(customerId: String?): List<ServiceRequestDto> =
-        client.from("service_requests")
-            .select {
-                filter {
-                    if (customerId == null) {
-                        isNull("customer_id")
-                    } else {
-                        eq("customer_id", customerId)
-                    }
-                }
-            }
+    suspend fun getByCustomer(customerId: String?): List<ServiceRequestDto> {
+        val rows = client.from("service_requests")
+            .select()
             .decodeList<ServiceRequestDto>()
+        return if (customerId == null) {
+            rows.filter { it.customerId == null }
+        } else {
+            rows.filter { it.customerId == customerId }
+        }
+    }
 
     suspend fun updateStatus(id: String, status: String): ServiceRequestDto =
         client.from("service_requests")

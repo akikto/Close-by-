@@ -70,14 +70,12 @@ class ProviderManagementRemoteDataSource(
     suspend fun getServicesByProvider(providerId: String, includeDeleted: Boolean = false): List<ServiceDto> =
         client.from("services")
             .select(columns = Columns.raw(serviceColumns)) {
-                filter {
-                    eq("provider_id", providerId)
-                    if (!includeDeleted) {
-                        isNull("deleted_at")
-                    }
-                }
+                filter { eq("provider_id", providerId) }
             }
             .decodeList<ServiceDto>()
+            .let { rows ->
+                if (includeDeleted) rows else rows.filter { it.deletedAt == null }
+            }
 
     suspend fun getServiceById(serviceId: String): ServiceDto? =
         client.from("services")
