@@ -22,6 +22,11 @@ import com.closeby.app.feature.request.CreateServiceRequestRoute
 import com.closeby.app.feature.request.RequestDetailsRoute
 import com.closeby.app.feature.request.RequestsScreen
 import com.closeby.app.feature.servicedetails.ServiceDetailsRoute
+import com.closeby.app.feature.trust.ReportRoute
+import com.closeby.app.feature.trust.SubmitReviewRoute
+import com.closeby.app.feature.trust.VerificationRoute
+import com.closeby.trust.domain.model.ReportTargetType
+import com.closeby.trust.domain.model.ReviewerRole
 
 @Composable
 fun CloseByNavHost(
@@ -87,6 +92,9 @@ fun CloseByNavHost(
                 },
                 onRequestService = { id ->
                     navController.navigate(AppRoutes.createRequest(id))
+                },
+                onReportService = { id ->
+                    navController.navigate(AppRoutes.report(ReportTargetType.SERVICE.name, id))
                 }
             )
         }
@@ -115,7 +123,10 @@ fun CloseByNavHost(
             val requestId = backStackEntry.arguments?.getString("requestId").orEmpty()
             RequestDetailsRoute(
                 requestId = requestId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onLeaveReview = { id ->
+                    navController.navigate(AppRoutes.submitReview(id, ReviewerRole.CUSTOMER.name))
+                }
             )
         }
 
@@ -131,7 +142,10 @@ fun CloseByNavHost(
             RequestDetailsRoute(
                 requestId = requestId,
                 providerId = providerId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onLeaveReview = { id ->
+                    navController.navigate(AppRoutes.submitReview(id, ReviewerRole.PROVIDER.name))
+                }
             )
         }
 
@@ -148,7 +162,11 @@ fun CloseByNavHost(
                 onServiceClick = { serviceId ->
                     navController.navigate(AppRoutes.serviceDetails(serviceId))
                 },
-                onProviderRequests = { navController.navigate(AppRoutes.providerRequests(providerId)) }
+                onProviderRequests = { navController.navigate(AppRoutes.providerRequests(providerId)) },
+                onVerification = { navController.navigate(AppRoutes.verification(providerId)) },
+                onReportProvider = {
+                    navController.navigate(AppRoutes.report(ReportTargetType.PROVIDER.name, providerId))
+                }
             )
         }
 
@@ -247,6 +265,53 @@ fun CloseByNavHost(
             val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
             AvailabilityEditorRoute(
                 providerId = providerId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.VERIFICATION,
+            arguments = listOf(navArgument("providerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            VerificationRoute(
+                providerId = providerId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.SUBMIT_REVIEW,
+            arguments = listOf(
+                navArgument("requestId") { type = NavType.StringType },
+                navArgument("role") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val requestId = backStackEntry.arguments?.getString("requestId").orEmpty()
+            val roleRaw = backStackEntry.arguments?.getString("role").orEmpty()
+            val role = runCatching { ReviewerRole.valueOf(roleRaw.uppercase()) }
+                .getOrDefault(ReviewerRole.CUSTOMER)
+            SubmitReviewRoute(
+                requestId = requestId,
+                role = role,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.REPORT,
+            arguments = listOf(
+                navArgument("targetType") { type = NavType.StringType },
+                navArgument("targetId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val targetTypeRaw = backStackEntry.arguments?.getString("targetType").orEmpty()
+            val targetId = backStackEntry.arguments?.getString("targetId").orEmpty()
+            val targetType = runCatching { ReportTargetType.valueOf(targetTypeRaw.uppercase()) }
+                .getOrDefault(ReportTargetType.SERVICE)
+            ReportRoute(
+                targetType = targetType,
+                targetId = targetId,
                 onBack = { navController.popBackStack() }
             )
         }
