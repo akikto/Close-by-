@@ -117,6 +117,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // Supabase (Postgrest for PostgreSQL access; GoTrue reserved for later Email OTP work)
+    implementation("io.github.jan-tennert.supabase:supabase-kt:2.5.4")
     implementation("io.github.jan-tennert.supabase:postgrest-kt:2.5.4")
     implementation("io.github.jan-tennert.supabase:gotrue-kt:2.5.4")
     implementation("io.ktor:ktor-client-android:2.3.12")
