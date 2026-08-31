@@ -42,7 +42,15 @@ jobs:
         if: failure()
         run: |
           echo "=== Gradle build errors ==="
-          grep -E "^(e:|FAILURE:|> Task :app:compile)" gradle-build.log | tail -80 || tail -120 gradle-build.log
+          if [ -f gradle-build.log ]; then
+            grep -E "^e:|^FAILURE:|^> Task :app:compile" gradle-build.log | tail -80 | while IFS= read -r line; do
+              echo "::error title=Build Error::$line"
+            done
+            tail -40 gradle-build.log
+          else
+            echo "::error title=Build Error::gradle-build.log not found"
+          fi
+          exit 1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
