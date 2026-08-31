@@ -57,7 +57,11 @@ class SupabaseServiceRequestRepository(
             if (remembered.isEmpty()) {
                 emptyList()
             } else {
-                runCatching { remote.getByIds(remembered.toList()) }.getOrDefault(emptyList())
+                try {
+                    remote.getByIds(remembered.toList())
+                } catch (_: Exception) {
+                    emptyList()
+                }
             }
         } else {
             emptyList()
@@ -118,20 +122,22 @@ class SupabaseServiceRequestRepository(
         clientSessionId: String?
     ): Result<ServiceRequest> = runCatching {
         val rememberedIds = clientSessionStorage?.getRememberedRequestIds().orEmpty()
-        val existing = remote.getById(requestId)
-            ?: clientSessionStorage?.getCachedRequests()
+        val remoteDto = remote.getById(requestId)
+        if (remoteDto == null) {
+            val cached = clientSessionStorage?.getCachedRequests()
                 ?.firstOrNull { it.id == requestId }
-                ?.let { cached ->
-                    return@runCatching cancelAnonymousCachedRequest(
-                        cached,
-                        customerId,
-                        clientSessionId,
-                        rememberedIds
-                    )
-                }
-            ?: throw NoSuchElementException("Request not found.")
-        assertCustomerOwnership(existing, customerId, clientSessionId, rememberedIds)
-        val current = ServiceRequestStatus.valueOf(existing.status)
+            if (cached != null) {
+                return@runCatching cancelAnonymousCachedRequest(
+                    cached,
+                    customerId,
+                    clientSessionId,
+                    rememberedIds
+                )
+            }
+            throw NoSuchElementException("Request not found.")
+        }
+        assertCustomerOwnership(remoteDto, customerId, clientSessionId, rememberedIds)
+        val current = ServiceRequestStatus.valueOf(remoteDto.status)
         if (!current.canTransitionTo(ServiceRequestStatus.CANCELLED)) {
             throw IllegalStateException("Cannot cancel request in status $current.")
         }

@@ -30,6 +30,7 @@ data class ServiceRequestDto(
 
 @Serializable
 data class ServiceRequestInsertDto(
+    val id: String? = null,
     @SerialName("service_id") val serviceId: String,
     @SerialName("provider_id") val providerId: String,
     @SerialName("customer_id") val customerId: String? = null,

@@ -48,6 +48,7 @@ object ServiceRequestMapper {
 
     fun toInsertDto(request: ServiceRequest): ServiceRequestInsertDto =
         ServiceRequestInsertDto(
+            id = request.id,
             serviceId = request.serviceId,
             providerId = request.providerId,
             customerId = request.customerId,
