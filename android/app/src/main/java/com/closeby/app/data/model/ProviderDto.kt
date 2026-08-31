@@ -13,5 +13,6 @@ data class ProviderDto(
     val category: String,
     val phone_number: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val is_verified: Boolean = false
 )
