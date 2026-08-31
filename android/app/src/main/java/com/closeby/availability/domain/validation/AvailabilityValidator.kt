@@ -8,6 +8,10 @@ sealed class AvailabilityValidationError(message: String) : Exception(message) {
         AvailabilityValidationError("Start and end time are required when marked available.")
     data object EndBeforeOrEqualStart :
         AvailabilityValidationError("End time must be after start time.")
+    data object OverlappingWindows :
+        AvailabilityValidationError("Availability windows overlap on the same day.")
+    data object DuplicateDay :
+        AvailabilityValidationError("Duplicate availability entries for the same day.")
 }
 
 /**
@@ -36,8 +40,18 @@ object AvailabilityValidator {
         }
 
     fun validateAll(entries: List<ProviderAvailability>): Result<Unit> {
-        for (entry in entries) {
-            validate(entry).onFailure { return Result.failure(it) }
+        val byDay = entries.groupBy { it.dayOfWeek }
+        for ((day, dayEntries) in byDay) {
+            if (dayEntries.size > 1) {
+                return Result.failure(AvailabilityValidationError.DuplicateDay)
+            }
+            for (entry in dayEntries) {
+                validate(entry).onFailure { return Result.failure(it) }
+            }
+            val available = dayEntries.filter { it.isAvailable }
+            if (available.size > 1) {
+                return Result.failure(AvailabilityValidationError.OverlappingWindows)
+            }
         }
         return Result.success(Unit)
     }

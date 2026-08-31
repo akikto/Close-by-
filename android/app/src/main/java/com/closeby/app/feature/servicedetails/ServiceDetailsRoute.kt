@@ -18,6 +18,7 @@ import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceDetailsV
 fun ServiceDetailsRoute(
     serviceId: String,
     onBack: () -> Unit,
+    onViewProviderProfile: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -44,7 +45,7 @@ fun ServiceDetailsRoute(
                 }
 
                 override fun onViewProviderProfile(providerId: String) {
-                    // Provider profile route — Phase 3
+                    onViewProviderProfile(providerId)
                 }
 
                 override fun onBack() = onBack()

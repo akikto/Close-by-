@@ -11,6 +11,11 @@ import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
 import com.closeby.app.feature.notification.NotificationsScreen
 import com.closeby.app.feature.profile.ProfileScreen
+import com.closeby.app.feature.provider.AddEditServiceRoute
+import com.closeby.app.feature.provider.AvailabilityEditorRoute
+import com.closeby.app.feature.provider.MyServicesRoute
+import com.closeby.app.feature.provider.ProviderProfileRoute
+import com.closeby.app.feature.provider.ProviderRequestsRoute
 import com.closeby.app.feature.request.RequestsScreen
 import com.closeby.app.feature.servicedetails.ServiceDetailsRoute
 
@@ -45,7 +50,13 @@ fun CloseByNavHost(
         }
         composable(TopLevelDestination.Requests.route) { RequestsScreen() }
         composable(TopLevelDestination.Notifications.route) { NotificationsScreen() }
-        composable(TopLevelDestination.Profile.route) { ProfileScreen() }
+        composable(TopLevelDestination.Profile.route) {
+            ProfileScreen(
+                onProviderProfile = { providerId ->
+                    navController.navigate(AppRoutes.providerProfile(providerId))
+                }
+            )
+        }
 
         composable(
             route = AppRoutes.SERVICE_DETAILS,
@@ -54,6 +65,98 @@ fun CloseByNavHost(
             val serviceId = backStackEntry.arguments?.getString("serviceId").orEmpty()
             ServiceDetailsRoute(
                 serviceId = serviceId,
+                onBack = { navController.popBackStack() },
+                onViewProviderProfile = { providerId ->
+                    navController.navigate(AppRoutes.providerProfile(providerId))
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.PROVIDER_PROFILE,
+            arguments = listOf(navArgument("providerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            ProviderProfileRoute(
+                providerId = providerId,
+                onBack = { navController.popBackStack() },
+                onMyServices = { navController.navigate(AppRoutes.myServices(providerId)) },
+                onEditAvailability = { navController.navigate(AppRoutes.editAvailability(providerId)) },
+                onServiceClick = { serviceId ->
+                    navController.navigate(AppRoutes.serviceDetails(serviceId))
+                },
+                onProviderRequests = { navController.navigate(AppRoutes.providerRequests(providerId)) }
+            )
+        }
+
+        composable(
+            route = AppRoutes.MY_SERVICES,
+            arguments = listOf(navArgument("providerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            MyServicesRoute(
+                providerId = providerId,
+                onBack = { navController.popBackStack() },
+                onAddService = { navController.navigate(AppRoutes.addService(providerId)) },
+                onEditService = { serviceId ->
+                    navController.navigate(AppRoutes.editService(providerId, serviceId))
+                },
+                onViewService = { serviceId ->
+                    navController.navigate(AppRoutes.serviceDetails(serviceId))
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.ADD_SERVICE,
+            arguments = listOf(navArgument("providerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            AddEditServiceRoute(
+                providerId = providerId,
+                serviceId = null,
+                onBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.EDIT_SERVICE,
+            arguments = listOf(
+                navArgument("providerId") { type = NavType.StringType },
+                navArgument("serviceId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            val serviceId = backStackEntry.arguments?.getString("serviceId").orEmpty()
+            AddEditServiceRoute(
+                providerId = providerId,
+                serviceId = serviceId,
+                onBack = { navController.popBackStack() },
+                onSaved = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.PROVIDER_REQUESTS,
+            arguments = listOf(navArgument("providerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            ProviderRequestsRoute(
+                providerId = providerId,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.EDIT_AVAILABILITY,
+            arguments = listOf(navArgument("providerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("providerId").orEmpty()
+            AvailabilityEditorRoute(
+                providerId = providerId,
                 onBack = { navController.popBackStack() }
             )
         }

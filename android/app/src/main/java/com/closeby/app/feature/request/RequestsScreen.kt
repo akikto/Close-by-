@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.closeby.request.data.mock.InMemoryServiceRequestRepository
+import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.request.presentation.CustomerRequestsViewModel
 import com.closeby.request.ui.CustomerRequestsScreen
 import com.closeby.util.UiState
@@ -38,7 +38,7 @@ private class CustomerRequestsViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
         CustomerRequestsViewModel(
             customerId = null,
-            repository = InMemoryServiceRequestRepository()
+            repository = ProviderDependenciesFactory.serviceRequestRepository()
         ) as T
 }
 

@@ -61,8 +61,10 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
             ServiceRequest(
                 id = "req_001",
                 serviceId = "svc_001",
-                providerId = "provider_101",
+                providerId = "11111111-1111-1111-1111-111111111101",
                 customerId = null,
+                customerName = "Anita",
+                customerPhone = "+919876543210",
                 serviceTitle = "Water Pump Rental",
                 requestedDate = LocalDate.now().plusDays(1),
                 startTime = LocalTime.of(9, 0),
@@ -77,8 +79,10 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
             ServiceRequest(
                 id = "req_002",
                 serviceId = "svc_002",
-                providerId = "provider_102",
+                providerId = "11111111-1111-1111-1111-111111111101",
                 customerId = null,
+                customerName = "Rahul",
+                customerPhone = "+919123456789",
                 serviceTitle = "House Cleaning Labour",
                 requestedDate = LocalDate.now(),
                 startTime = LocalTime.of(14, 0),

@@ -21,6 +21,14 @@ object ServiceListingMapper {
         val priceUnit = parsePriceUnit(dto.priceUnit)
         val provider = dto.providers ?: return null
 
+        val price = dto.priceAmount?.let { amount ->
+            PriceInfo(
+                amount = amount,
+                unit = priceUnit,
+                isStartingPrice = dto.priceIsStarting
+            )
+        } ?: PriceInfo(amount = 0.0, unit = PriceUnit.NONE)
+
         return ServiceListing(
             id = dto.id,
             providerId = dto.providerId,
@@ -32,12 +40,8 @@ object ServiceListingMapper {
             latitude = dto.latitude,
             longitude = dto.longitude,
             availability = availability,
-            price = PriceInfo(
-                amount = dto.priceAmount,
-                unit = priceUnit,
-                isStartingPrice = dto.priceIsStarting
-            ),
-            contactNumber = provider.phoneNumber,
+            price = price,
+            contactNumber = dto.contactNumber ?: provider.phoneNumber,
             providerName = provider.name,
             rating = dto.rating,
             reviewCount = dto.reviewCount,
@@ -58,7 +62,8 @@ object ServiceListingMapper {
         runCatching { AvailabilityStatus.valueOf(raw.trim().uppercase()) }
             .getOrDefault(AvailabilityStatus.UNAVAILABLE)
 
-    private fun parsePriceUnit(raw: String): PriceUnit =
-        runCatching { PriceUnit.valueOf(raw.trim().uppercase()) }
-            .getOrDefault(PriceUnit.NONE)
+    private fun parsePriceUnit(raw: String?): PriceUnit =
+        raw?.let {
+            runCatching { PriceUnit.valueOf(it.trim().uppercase()) }.getOrNull()
+        } ?: PriceUnit.NONE
 }
