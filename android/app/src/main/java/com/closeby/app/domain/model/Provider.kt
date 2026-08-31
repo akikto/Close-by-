@@ -1,9 +1,10 @@
 package com.closeby.app.domain.model
 
+import com.closeby.feature.servicelisting.domain.model.ServiceCategory
+
 /**
- * Minimal placeholder domain model for a service provider.
- * Intentionally not over-engineered — fields will expand once the
- * provider feature is implemented.
+ * Minimal domain model for a service provider.
+ * Uses the canonical servicelisting [ServiceCategory] taxonomy.
  */
 data class Provider(
     val id: String,

@@ -28,6 +28,7 @@ class ServiceDetailsViewModel(
     val uiState: StateFlow<ServiceDetailsUiState> = _uiState.asStateFlow()
 
     init {
+        locationProvider.start(viewModelScope)
         load()
     }
 

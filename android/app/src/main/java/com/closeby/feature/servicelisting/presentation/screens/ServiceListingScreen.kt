@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,25 +45,32 @@ import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceListingV
 fun ServiceListingScreen(
     viewModel: ServiceListingViewModel,
     onServiceClick: (ServiceListing) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showFullFilters: Boolean = true,
+    maxListings: Int? = null,
+    showSearchBar: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showFilterSheet by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
 
-        Row(
-            modifier = Modifier.fillMaxSize().padding(bottom = 8.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-        ) {
-            ServiceSearchBar(
-                query = (uiState as? ServiceListUiState.Success)?.query
-                    ?: (uiState as? ServiceListUiState.Empty)?.query.orEmpty(),
-                onQueryChange = viewModel::onQueryChanged,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = { showFilterSheet = true }) {
-                Icon(Icons.Filled.Tune, contentDescription = "Open filters")
+        if (showSearchBar) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                ServiceSearchBar(
+                    query = (uiState as? ServiceListUiState.Success)?.query
+                        ?: (uiState as? ServiceListUiState.Empty)?.query.orEmpty(),
+                    onQueryChange = viewModel::onQueryChanged,
+                    modifier = Modifier.weight(1f)
+                )
+                if (showFullFilters) {
+                    IconButton(onClick = { showFilterSheet = true }) {
+                        Icon(Icons.Filled.Tune, contentDescription = "Open filters")
+                    }
+                }
             }
         }
 
@@ -72,39 +80,46 @@ fun ServiceListingScreen(
             else -> com.closeby.feature.servicelisting.domain.model.ServiceFilter()
         }
 
-        CategorySelector(
-            selectedCategory = currentFilter.category,
-            onCategorySelected = viewModel::onCategorySelected,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
-        currentFilter.category?.let { category ->
-            SubcategorySelector(
-                category = category,
-                selectedSubcategory = currentFilter.subcategory,
-                onSubcategorySelected = viewModel::onSubcategorySelected,
-                modifier = Modifier.padding(bottom = 8.dp)
+        if (showFullFilters) {
+            CategorySelector(
+                selectedCategory = currentFilter.category,
+                onCategorySelected = viewModel::onCategorySelected,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxSize().padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.End
-        ) {
-            val sortOption = (uiState as? ServiceListUiState.Success)?.sortOption
-                ?: com.closeby.feature.servicelisting.domain.model.SortOption.DEFAULT
-            SortSelector(selected = sortOption, onSortSelected = viewModel::onSortChanged)
+        if (showFullFilters) {
+            currentFilter.category?.let { category ->
+                SubcategorySelector(
+                    category = category,
+                    selectedSubcategory = currentFilter.subcategory,
+                    onSubcategorySelected = viewModel::onSubcategorySelected,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                val sortOption = (uiState as? ServiceListUiState.Success)?.sortOption
+                    ?: com.closeby.feature.servicelisting.domain.model.SortOption.DEFAULT
+                SortSelector(selected = sortOption, onSortSelected = viewModel::onSortChanged)
+            }
         }
 
         when (val state = uiState) {
             is ServiceListUiState.Loading -> ServiceListLoadingState(modifier = Modifier.fillMaxSize())
 
             is ServiceListUiState.Success -> {
+                val listings = maxListings?.let { limit ->
+                    state.listings.take(limit)
+                } ?: state.listings
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(state.listings, key = { it.id }) { listing ->
+                    items(listings, key = { it.id }) { listing ->
                         ServiceCard(listing = listing, onClick = onServiceClick)
                     }
                 }
@@ -125,7 +140,7 @@ fun ServiceListingScreen(
         }
     }
 
-    if (showFilterSheet) {
+    if (showFilterSheet && showFullFilters) {
         FilterSheet(
             filter = currentFilterOrDefault(uiState),
             onFilterChange = viewModel::onFilterChanged,
