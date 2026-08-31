@@ -28,6 +28,7 @@ import com.closeby.app.feature.advertisement.MyAdvertisementsRoute
 import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
 import com.closeby.app.feature.notification.NotificationsRoute
+import com.closeby.app.feature.profile.ProfileScreen
 import com.closeby.app.feature.saved.RecentlyViewedRoute
 import com.closeby.app.feature.saved.SavedServicesRoute
 import com.closeby.app.feature.provider.AddEditServiceRoute

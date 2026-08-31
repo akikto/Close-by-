@@ -160,7 +160,10 @@ fun ProfileScreen(
                         shape = RoundedCornerShape(14.dp)
                     ) { Text("Sign out") }
                 }
-                AuthState.Loading, AuthState.OtpVerification -> {
+                AuthState.Loading -> {
+                    CircularProgressIndicator()
+                }
+                is AuthState.OtpVerification -> {
                     CircularProgressIndicator()
                 }
                 is AuthState.OtpRequested -> {
