@@ -39,7 +39,7 @@ fun FilterSheet(
 
             SectionLabel("Distance")
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                androidx.compose.foundation.lazy.items(RadiusOption.entries.toList()) { radius ->
+                items(RadiusOption.entries.toList()) { radius ->
                     FilterChip(
                         selected = filter.radiusKm == radius,
                         onClick = {
