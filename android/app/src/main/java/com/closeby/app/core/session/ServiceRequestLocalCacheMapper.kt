@@ -32,42 +32,8 @@ internal data class CachedServiceRequest(
     val status: String,
     val createdAt: Long,
     val updatedAt: Long
-)
-
-internal object ServiceRequestLocalCacheMapper {
-    private val json = Json { ignoreUnknownKeys = true }
-
-    fun encode(request: ServiceRequest): String = json.encodeToString(request.toCached())
-
-    fun decode(raw: String): ServiceRequest? = runCatching {
-        json.decodeFromString<CachedServiceRequest>(raw).toDomain()
-    }.getOrNull()
-
-    private fun ServiceRequest.toCached() = CachedServiceRequest(
-        id = id,
-        serviceId = serviceId,
-        providerId = providerId,
-        customerId = customerId,
-        customerName = customerName,
-        customerPhone = customerPhone,
-        serviceTitle = serviceTitle,
-        requestedDate = requestedDate.toString(),
-        startTime = startTime.toString(),
-        endTime = endTime.toString(),
-        duration = duration,
-        budgetAmount = budgetAmount,
-        budgetCurrency = budgetCurrency,
-        budgetUnit = budgetUnit?.name,
-        note = note,
-        clientSessionId = clientSessionId,
-        providerName = providerName,
-        providerPhone = providerPhone,
-        status = status.name,
-        createdAt = createdAt,
-        updatedAt = updatedAt
-    )
-
-    private fun CachedServiceRequest.toDomain(): ServiceRequest = ServiceRequest(
+) {
+    fun toDomain(): ServiceRequest = ServiceRequest(
         id = id,
         serviceId = serviceId,
         providerId = providerId,
@@ -86,8 +52,46 @@ internal object ServiceRequestLocalCacheMapper {
         clientSessionId = clientSessionId,
         providerName = providerName,
         providerPhone = providerPhone,
-        status = runCatching { ServiceRequestStatus.valueOf(status) }.getOrDefault(ServiceRequestStatus.PENDING),
+        status = runCatching { ServiceRequestStatus.valueOf(status) }
+            .getOrDefault(ServiceRequestStatus.PENDING),
         createdAt = createdAt,
         updatedAt = updatedAt
     )
+
+    companion object {
+        fun from(request: ServiceRequest) = CachedServiceRequest(
+            id = request.id,
+            serviceId = request.serviceId,
+            providerId = request.providerId,
+            customerId = request.customerId,
+            customerName = request.customerName,
+            customerPhone = request.customerPhone,
+            serviceTitle = request.serviceTitle,
+            requestedDate = request.requestedDate.toString(),
+            startTime = request.startTime.toString(),
+            endTime = request.endTime.toString(),
+            duration = request.duration,
+            budgetAmount = request.budgetAmount,
+            budgetCurrency = request.budgetCurrency,
+            budgetUnit = request.budgetUnit?.name,
+            note = request.note,
+            clientSessionId = request.clientSessionId,
+            providerName = request.providerName,
+            providerPhone = request.providerPhone,
+            status = request.status.name,
+            createdAt = request.createdAt,
+            updatedAt = request.updatedAt
+        )
+    }
+}
+
+internal object ServiceRequestLocalCacheMapper {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    fun encode(request: ServiceRequest): String =
+        json.encodeToString(CachedServiceRequest.from(request))
+
+    fun decode(raw: String): ServiceRequest? = runCatching {
+        json.decodeFromString<CachedServiceRequest>(raw).toDomain()
+    }.getOrNull()
 }
