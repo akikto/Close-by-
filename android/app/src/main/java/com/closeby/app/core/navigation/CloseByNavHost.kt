@@ -1,12 +1,28 @@
 package com.closeby.app.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.feature.admin.AdminAdvertisementsRoute
+import com.closeby.app.feature.admin.AdminGateRoute
+import com.closeby.app.feature.admin.AdminLoadingRoute
+import com.closeby.app.feature.admin.AdminProvidersRoute
+import com.closeby.app.feature.admin.AdminReportsRoute
+import com.closeby.app.feature.admin.AdminServicesRoute
+import com.closeby.app.feature.admin.AdminUsersRoute
+import com.closeby.app.feature.admin.AdminVerificationRoute
 import com.closeby.app.feature.advertisement.CreateAdvertisementRoute
 import com.closeby.app.feature.advertisement.MyAdvertisementsRoute
 import com.closeby.app.feature.explore.ExploreScreen
@@ -75,8 +91,54 @@ fun CloseByNavHost(
                 },
                 onCreateAdvertisement = { ownerId ->
                     navController.navigate(AppRoutes.createAdvertisement(ownerId))
+                },
+                onAdminDashboard = {
+                    navController.navigate(AppRoutes.ADMIN)
                 }
             )
+        }
+
+        composable(AppRoutes.ADMIN) {
+            var userId by remember { mutableStateOf<String?>(null) }
+            LaunchedEffect(Unit) {
+                userId = withContext(Dispatchers.IO) {
+                    ProviderDependenciesFactory.authRepository().getCurrentSession()?.userId
+                }
+            }
+            val resolvedUserId = userId
+            if (resolvedUserId == null) {
+                AdminLoadingRoute()
+            } else {
+                AdminGateRoute(
+                    userId = resolvedUserId,
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
+                )
+            }
+        }
+
+        composable(AppRoutes.ADMIN_VERIFICATIONS) {
+            AdminVerificationRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_REPORTS) {
+            AdminReportsRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_ADS) {
+            AdminAdvertisementsRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_PROVIDERS) {
+            AdminProvidersRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_SERVICES) {
+            AdminServicesRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_USERS) {
+            AdminUsersRoute(onBack = { navController.popBackStack() })
         }
 
         composable(

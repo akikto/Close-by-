@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.closeby.app.core.di.AdminDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.feature.provider.presentation.AuthUiState
 import com.closeby.feature.provider.presentation.ProviderAuthViewModel
@@ -36,6 +40,7 @@ fun ProfileScreen(
     onProviderProfile: (providerId: String) -> Unit,
     onMyAdvertisements: (String) -> Unit,
     onCreateAdvertisement: (String) -> Unit,
+    onAdminDashboard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: ProviderAuthViewModel = viewModel(
@@ -51,8 +56,20 @@ fun ProfileScreen(
         }
     )
     val authState by viewModel.uiState.collectAsState()
+    var isAdmin by remember { mutableStateOf<Boolean?>(null) }
     var email by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
+
+    LaunchedEffect(authState) {
+        val signedIn = authState as? AuthUiState.SignedIn
+        isAdmin = if (signedIn != null) {
+            withContext(Dispatchers.IO) {
+                AdminDependenciesFactory.adminRepository().isAdmin(signedIn.userId)
+            }
+        } else {
+            null
+        }
+    }
 
     Scaffold(modifier = modifier) { innerPadding ->
         Column(
@@ -82,6 +99,16 @@ fun ProfileScreen(
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Text("Provider Profile")
+                    }
+                    if (isAdmin == true) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = onAdminDashboard,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text("Admin Dashboard")
+                        }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
