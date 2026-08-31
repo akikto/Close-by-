@@ -28,7 +28,8 @@ import com.closeby.app.feature.advertisement.MyAdvertisementsRoute
 import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
 import com.closeby.app.feature.notification.NotificationsRoute
-import com.closeby.app.feature.profile.ProfileScreen
+import com.closeby.app.feature.saved.RecentlyViewedRoute
+import com.closeby.app.feature.saved.SavedServicesRoute
 import com.closeby.app.feature.provider.AddEditServiceRoute
 import com.closeby.app.feature.provider.AvailabilityEditorRoute
 import com.closeby.app.feature.provider.MyServicesRoute
@@ -103,6 +104,38 @@ fun CloseByNavHost(
                 },
                 onAdminDashboard = {
                     navController.navigate(AppRoutes.ADMIN)
+                },
+                onMyRequests = {
+                    navController.navigate(TopLevelDestination.Requests.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onSavedServices = {
+                    navController.navigate(AppRoutes.SAVED_SERVICES)
+                },
+                onRecentlyViewed = {
+                    navController.navigate(AppRoutes.RECENTLY_VIEWED)
+                },
+                onReportProblem = {
+                    navController.navigate(AppRoutes.report(ReportTargetType.SERVICE.name, "support"))
+                }
+            )
+        }
+
+        composable(AppRoutes.SAVED_SERVICES) {
+            SavedServicesRoute(
+                onBack = { navController.popBackStack() },
+                onServiceClick = { serviceId ->
+                    navController.navigate(AppRoutes.serviceDetails(serviceId))
+                }
+            )
+        }
+
+        composable(AppRoutes.RECENTLY_VIEWED) {
+            RecentlyViewedRoute(
+                onBack = { navController.popBackStack() },
+                onServiceClick = { serviceId ->
+                    navController.navigate(AppRoutes.serviceDetails(serviceId))
                 }
             )
         }

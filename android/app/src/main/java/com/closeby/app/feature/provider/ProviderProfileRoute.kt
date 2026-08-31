@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,11 +27,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.NearbyDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.core.di.TrustDependenciesFactory
 import com.closeby.feature.provider.presentation.ProviderProfileViewModel
 import com.closeby.feature.provider.ui.ProviderProfileError
 import com.closeby.feature.provider.ui.ProviderProfileLoading
 import com.closeby.feature.provider.ui.ProviderProfileScreen
 import com.closeby.util.UiState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,13 +50,18 @@ fun ProviderProfileRoute(
 ) {
     val context = LocalContext.current
     val stack = remember(context) { NearbyDependenciesFactory.createStack(context) }
+    val trustRepository = remember(context) { TrustDependenciesFactory.trustRepository(context) }
     var resolvedOwnProviderId by remember { mutableStateOf<String?>(null) }
+    var isBlocked by remember { mutableStateOf(false) }
     LaunchedEffect(providerId) {
         val session = ProviderDependenciesFactory.authRepository().getCurrentSession()
         resolvedOwnProviderId = session?.let {
             ProviderDependenciesFactory.providerManagementRepository()
                 .getProviderIdForUser(it.userId)
                 .getOrNull()
+        }
+        session?.userId?.let { userId ->
+            isBlocked = trustRepository.isProviderBlocked(userId, providerId).getOrDefault(false)
         }
     }
     val viewModel: ProviderProfileViewModel = viewModel(
@@ -72,6 +80,7 @@ fun ProviderProfileRoute(
         }
     )
     val uiState by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(providerId) { viewModel.load() }
 
@@ -98,7 +107,19 @@ fun ProviderProfileRoute(
                     onServiceClick = onServiceClick,
                     onProviderRequests = onProviderRequests,
                     onVerification = onVerification,
-                    onReportProvider = onReportProvider
+                    onReportProvider = onReportProvider,
+                    isBlocked = isBlocked,
+                    onBlockProvider = {
+                        scope.launch {
+                            val session = ProviderDependenciesFactory.authRepository().getCurrentSession()
+                                ?: return@launch
+                            if (isBlocked) {
+                                trustRepository.unblockProvider(session.userId, providerId)
+                            } else {
+                                trustRepository.blockProvider(session.userId, providerId)
+                            }.onSuccess { isBlocked = !isBlocked }
+                        }
+                    }
                 )
                 is UiState.Error -> ProviderProfileError(state.message, onRetry = viewModel::load)
             }

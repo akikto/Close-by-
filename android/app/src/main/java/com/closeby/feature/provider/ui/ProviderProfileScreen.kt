@@ -48,6 +48,8 @@ fun ProviderProfileScreen(
     onProviderRequests: () -> Unit,
     onVerification: () -> Unit = {},
     onReportProvider: () -> Unit = {},
+    onBlockProvider: () -> Unit = {},
+    isBlocked: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -121,6 +123,14 @@ fun ProviderProfileScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         OutlinedButton(onClick = onReportProvider, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                             Text("Report provider")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onBlockProvider,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text(if (isBlocked) "Unblock provider" else "Block provider")
                         }
                     }
                 }
