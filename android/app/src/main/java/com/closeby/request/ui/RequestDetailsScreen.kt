@@ -17,13 +17,20 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.ConfirmDialog
 import com.closeby.contact.domain.ContactLauncher
 import com.closeby.contact.ui.CallProviderButton
 import com.closeby.contact.ui.SmsProviderButton
 import com.closeby.request.domain.model.ServiceRequest
 import com.closeby.request.domain.model.ServiceRequestStatus
+
+private enum class PendingAction { Cancel, Reject, Complete }
 
 @Composable
 fun RequestDetailsScreen(
@@ -38,6 +45,42 @@ fun RequestDetailsScreen(
     onLeaveReview: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var pendingAction by remember { mutableStateOf<PendingAction?>(null) }
+
+    pendingAction?.let { action ->
+        val (title, message, confirmLabel) = when (action) {
+            PendingAction.Cancel -> Triple(
+                "Cancel request?",
+                "This will cancel your service request.",
+                "Cancel request"
+            )
+            PendingAction.Reject -> Triple(
+                "Reject request?",
+                "The customer will be notified that you declined.",
+                "Reject"
+            )
+            PendingAction.Complete -> Triple(
+                "Mark as completed?",
+                "Confirm that this service was completed.",
+                "Complete"
+            )
+        }
+        ConfirmDialog(
+            title = title,
+            message = message,
+            confirmLabel = confirmLabel,
+            onConfirm = {
+                when (action) {
+                    PendingAction.Cancel -> onCancel()
+                    PendingAction.Reject -> onReject()
+                    PendingAction.Complete -> onComplete()
+                }
+                pendingAction = null
+            },
+            onDismiss = { pendingAction = null }
+        )
+    }
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -69,13 +112,19 @@ fun RequestDetailsScreen(
                 when (request.status) {
                     ServiceRequestStatus.PENDING -> {
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f)) { Text("Reject") }
+                            OutlinedButton(
+                                onClick = { pendingAction = PendingAction.Reject },
+                                modifier = Modifier.weight(1f)
+                            ) { Text("Reject") }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(onClick = onAccept, modifier = Modifier.weight(1f)) { Text("Accept") }
                         }
                     }
                     ServiceRequestStatus.ACCEPTED -> {
-                        Button(onClick = onComplete, modifier = Modifier.fillMaxWidth()) { Text("Complete") }
+                        Button(
+                            onClick = { pendingAction = PendingAction.Complete },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Complete") }
                     }
                     ServiceRequestStatus.COMPLETED -> {
                         Button(onClick = onLeaveReview, modifier = Modifier.fillMaxWidth()) { Text("Leave Review") }
@@ -83,7 +132,10 @@ fun RequestDetailsScreen(
                     else -> Unit
                 }
             } else if (request.status == ServiceRequestStatus.PENDING) {
-                OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("Cancel Request") }
+                OutlinedButton(
+                    onClick = { pendingAction = PendingAction.Cancel },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Cancel Request") }
             } else if (request.status == ServiceRequestStatus.COMPLETED) {
                 Button(onClick = onLeaveReview, modifier = Modifier.fillMaxWidth()) { Text("Leave Review") }
             }

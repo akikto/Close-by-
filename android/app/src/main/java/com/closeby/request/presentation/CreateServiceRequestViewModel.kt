@@ -2,6 +2,9 @@ package com.closeby.request.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.closeby.app.core.error.AppErrorMapper
+import com.closeby.app.core.network.NetworkMonitor
+import com.closeby.app.core.network.NetworkStatus
 import com.closeby.app.core.session.ClientSessionStorage
 import com.closeby.availability.domain.repository.AvailabilityRepository
 import com.closeby.feature.servicelisting.domain.repository.ServiceRepository
@@ -38,7 +41,8 @@ class CreateServiceRequestViewModel(
     private val repository: ServiceRequestRepository,
     private val serviceRepository: ServiceRepository,
     private val availabilityRepository: AvailabilityRepository,
-    private val clientSessionStorage: ClientSessionStorage
+    private val clientSessionStorage: ClientSessionStorage,
+    private val networkMonitor: NetworkMonitor? = null
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow<CreateRequestFormState>(CreateRequestFormState.Idle)
@@ -77,6 +81,11 @@ class CreateServiceRequestViewModel(
         customerPhone: String?
     ) {
         if (isSubmitting) return
+
+        if (networkMonitor?.status?.value == NetworkStatus.OFFLINE) {
+            _formState.value = CreateRequestFormState.Error(AppErrorMapper.offlineRequestMessage())
+            return
+        }
 
         val validation = ServiceRequestValidator.validateNewRequest(
             serviceTitle = serviceTitle,
@@ -166,7 +175,7 @@ class CreateServiceRequestViewModel(
                 .onFailure { error ->
                     isSubmitting = false
                     _formState.value = CreateRequestFormState.Error(
-                        error.message ?: "Failed to send request."
+                        AppErrorMapper.toUserMessage(error)
                     )
                 }
         }

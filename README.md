@@ -2,151 +2,77 @@
 
 **Local service discovery & direct rental marketplace for Android.**
 
-> **BASE PROJECT — FEATURE IMPLEMENTATION NOT STARTED**
+Native Kotlin / Jetpack Compose app backed by Supabase.
 
 ## Product
 
-Close by connects customers with nearby providers of:
-
-1. Vehicles
-2. Labour
-3. Equipment
-
-Core philosophy:
+Close by connects customers with nearby providers of vehicles, labour, and equipment.
 
 > Find Close → Contact Direct → Agree Direct → Get Service → Pay Direct
 
-Everything past discovery — negotiating, calling, agreeing, paying —
-happens directly between customer and provider, outside the app. Close
-by does not process payments, take a commission, or provide in-app
-messaging/calling.
-
-### Explicitly out of scope (by design)
-
-- Online payment, UPI, card payment, wallet, or any payment gateway
-- App commission
-- In-app chat or in-app calling (native dialer is used instead)
-- SMS OTP / mobile OTP for customers
-- Forced login to browse services
-
-Provider accounts may later use **Email OTP**. Calling uses the native
-Android dialer; SMS uses the native Messages app.
+Payments, in-app chat, and in-app calling are out of scope. Native dialer and SMS are used for contact.
 
 ## Technology stack
 
-- Kotlin
-- Jetpack Compose + Material 3
-- MVVM architecture
-- Kotlin Coroutines + StateFlow
-- Navigation Compose
-- Supabase (Postgrest + Auth client)
-- PostgreSQL (via Supabase)
+- Kotlin, Jetpack Compose, Material 3
+- MVVM + Clean Architecture
+- Coroutines, StateFlow, Navigation Compose
+- Supabase (Postgrest + Email OTP Auth)
 
 ## Architecture
 
 ```
-UI (Composable)
-  ↓
-ViewModel
-  ↓
-UseCase
-  ↓
-Repository (interface, domain layer)
-  ↓
-DataSource (implementation, data layer — Supabase/PostgreSQL)
+UI (Composable) → ViewModel → UseCase → Repository (domain) → DataSource (Supabase / local)
 ```
 
-No database queries or business logic live inside Composable functions.
+## Setup
 
-## Folder structure
+1. Clone the repository.
+2. Copy `.env.example` guidance into `android/local.properties`:
+   ```properties
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   ```
+3. Apply Supabase migrations in order — see `docs/supabase/MIGRATION_ORDER.md`.
+4. Open `android/` in Android Studio or build from CLI.
 
-```
-android/app/src/main/java/com/closeby/app/
-  core/
-    navigation/     top-level destinations, NavHost, bottom bar
-    location/       location contracts (GeoPoint, LocationProvider)
-    permissions/    runtime permission contracts
-    phone/          native dialer launcher (ACTION_DIAL)
-    sms/            native SMS launcher (ACTION_SENDTO)
-    network/        Supabase client provider
-    storage/        local key-value storage contract
-    ui/
-      theme/        Color, Type, Shape, Theme (teal/blue design language)
-      components/   reusable Composables (CloseByCard, PrimaryButton, ...)
-    utils/
+## Build commands
 
-  data/
-    model/          Supabase/Postgres wire models (DTOs)
-    repository/     repository implementations
-    remote/         Supabase data sources
-    mapper/         DTO ↔ domain mappers
-
-  domain/
-    model/          domain models (Provider, ServiceListing, ...)
-    repository/     repository interfaces
-    usecase/        use cases
-
-  feature/
-    home/ explore/ service/ provider/ request/
-    notification/ profile/ review/ report/ verification/
+```bash
+cd android
+./gradlew test
+./gradlew lint
+./gradlew assembleDebug
 ```
 
-Feature folders without a screen file yet (`service`, `provider`,
-`review`, `report`, `verification`) hold a `.gitkeep` placeholder —
-they're reserved for future feature-specific agent work.
+Release build requires signing — see `docs/RELEASE_SIGNING.md`.
 
-## Navigation foundation
+## Testing
 
-Bottom navigation with five top-level destinations, each currently a
-placeholder screen:
-
-- Home
-- Explore
-- Requests
-- Notifications
-- Profile
-
-## Design language
-
-Teal + blue palette, soft gradients, white surfaces, rounded cards and
-icons, compact layout, clear typography, large touch targets. See
-`core/ui/theme/` for tokens and `core/ui/components/` for reusable
-building blocks (`CloseByCard`, `GradientSurface`, `PrimaryButton`).
-
-## Supabase configuration
-
-No secrets are committed. Copy `.env.example` values into a local,
-git-ignored `local.properties` file at the repo root:
-
-```
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+```bash
+cd android && ./gradlew test
 ```
 
-These are read into `BuildConfig.SUPABASE_URL` / `BuildConfig.SUPABASE_ANON_KEY`
-at build time. The database schema itself is not implemented yet.
+Unit tests cover offline queue, error mapping, notifications, navigation routes, and domain logic.
 
-## Development rules
+## Features (Phases 1–16)
 
-See [`docs/AI_DEVELOPMENT_CONTRACT.md`](docs/AI_DEVELOPMENT_CONTRACT.md)
-for the full rules AI coding agents must follow on this repo (scope
-discipline, no silent architecture changes, no unnecessary dependencies,
-no exposed secrets, must build, must include tests, and more).
+- Service discovery, nearby search, filters, pagination
+- Provider management, availability, verification
+- Service requests (customer + provider flows)
+- Trust & safety: reviews, reports, blocks
+- In-app notifications with deep links
+- Advertisements and admin dashboard
+- Email OTP authentication, saved services, recently viewed
+- Offline browsing, cached listings, offline saved-service queue
+- Production hardening and release documentation
 
-## Current project status
+## Security
 
-**Base project only.** What exists:
+- Only the Supabase **anon** key ships in the client.
+- Never commit service-role keys or keystore passwords.
+- See `docs/supabase/SECURITY_AUDIT.md` and `docs/PRIVACY_AUDIT.md`.
 
-- Clean module/folder structure (core / data / domain / feature)
-- Navigation foundation (5 placeholder screens, bottom bar, NavHost)
-- Theme foundation (color, type, shape, reusable components)
-- Supabase client wiring (config placeholders, no schema yet)
-- Location / permissions / phone / sms contracts (interfaces only)
-- One example domain slice (Provider) showing the intended
-  UI → ViewModel → UseCase → Repository → DataSource flow end to end,
-  as a pattern for feature agents to follow
+## Release
 
-**Not implemented yet:** complete Home UI, complete Explore/nearby
-search, provider dashboard, admin dashboard, requests, reviews,
-advertisements, verification, search, and the nearby-matching
-algorithm. These are separate feature tasks.
+Follow `docs/RELEASE_CHECKLIST.md` before beta or production deployment.

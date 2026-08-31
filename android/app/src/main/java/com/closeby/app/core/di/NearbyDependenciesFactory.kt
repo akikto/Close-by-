@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.core.network.NetworkMonitor
+import com.closeby.app.core.network.NetworkMonitorHolder
 import com.closeby.app.core.di.TrustDependenciesFactory
 import com.closeby.app.data.location.LocationSession
 import com.closeby.app.data.location.ServicelistingLocationAdapter
@@ -23,7 +24,8 @@ object NearbyDependenciesFactory {
         val serviceRepository: ServiceRepository,
         val locationProvider: LocationProvider,
         val locationSession: LocationSession,
-        val blockedProviderIdsProvider: suspend () -> Set<String>
+        val blockedProviderIdsProvider: suspend () -> Set<String>,
+        val networkMonitor: NetworkMonitor
     )
 
     fun createStack(context: Context): NearbyStack {
@@ -33,13 +35,14 @@ object NearbyDependenciesFactory {
         val trustRepository = TrustDependenciesFactory.trustRepository(context)
         val authRepository = ProviderDependenciesFactory.authRepository()
         return NearbyStack(
-            serviceRepository = ServiceRepositoryFactory.create(),
+            serviceRepository = ServiceRepositoryFactory.create(context),
             locationProvider = locationAdapter,
             locationSession = session,
             blockedProviderIdsProvider = {
                 val userId = authRepository.getCurrentSession()?.userId ?: return@NearbyStack emptySet()
                 trustRepository.getBlockedProviderIds(userId).getOrDefault(emptySet())
-            }
+            },
+            networkMonitor = NetworkMonitorHolder.get(context)
         )
     }
 
@@ -50,7 +53,8 @@ object NearbyDependenciesFactory {
                 ServiceListingViewModel(
                     serviceRepository = stack.serviceRepository,
                     locationProvider = stack.locationProvider,
-                    blockedProviderIdsProvider = stack.blockedProviderIdsProvider
+                    blockedProviderIdsProvider = stack.blockedProviderIdsProvider,
+                    networkMonitor = stack.networkMonitor
                 ) as T
         }
 

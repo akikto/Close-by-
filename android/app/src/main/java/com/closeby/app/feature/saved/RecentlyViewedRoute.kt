@@ -48,7 +48,7 @@ fun RecentlyViewedRoute(
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
                     RecentlyViewedViewModel(
                         historyRepository = SavedDependenciesFactory.recentlyViewedRepository(context),
-                        serviceRepository = ServiceRepositoryFactory.create()
+                        serviceRepository = ServiceRepositoryFactory.create(context)
                     ) as T
             }
         }

@@ -7,6 +7,8 @@ import com.closeby.notification.data.repository.SupabaseNotificationRepository
 import com.closeby.notification.domain.handler.NotificationEventHandler
 import com.closeby.notification.domain.repository.NotificationRepository
 import com.closeby.request.domain.repository.ServiceRequestRepository
+import com.closeby.notification.domain.push.NoOpPushNotificationGateway
+import com.closeby.notification.domain.push.PushNotificationGateway
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -21,6 +23,9 @@ object NotificationDependenciesFactory {
 
     private var repository: NotificationRepository? = null
     private var eventHandler: NotificationEventHandler? = null
+    private val pushGateway: PushNotificationGateway = NoOpPushNotificationGateway()
+
+    fun pushNotificationGateway(): PushNotificationGateway = pushGateway
 
     fun notificationRepository(): NotificationRepository {
         repository?.let { return it }

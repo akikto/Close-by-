@@ -89,6 +89,24 @@ fun CloseByNavHost(
                 },
                 onOpenProviderRequestDetails = { providerId, requestId ->
                     navController.navigate(AppRoutes.providerRequestDetails(providerId, requestId))
+                },
+                onOpenVerification = {
+                    navController.navigate(TopLevelDestination.Profile.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenAdvertisement = { _ ->
+                    navController.navigate(TopLevelDestination.Profile.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenAdmin = {
+                    navController.navigate(AppRoutes.ADMIN)
+                },
+                onOpenProfile = {
+                    navController.navigate(TopLevelDestination.Profile.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

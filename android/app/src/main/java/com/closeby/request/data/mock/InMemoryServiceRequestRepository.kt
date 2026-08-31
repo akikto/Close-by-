@@ -69,6 +69,7 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
         }
         val updated = current.copy(status = ServiceRequestStatus.CANCELLED, updatedAt = System.currentTimeMillis())
         requests[index] = updated
+        RequestNotificationBridge.publish(RequestNotificationEvent.RequestCancelled(requestId))
         updated
     }
 

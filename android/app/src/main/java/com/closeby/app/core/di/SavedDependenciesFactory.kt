@@ -2,10 +2,12 @@ package com.closeby.app.core.di
 
 import android.content.Context
 import com.closeby.app.BuildConfig
+import com.closeby.app.core.network.NetworkMonitorHolder
 import com.closeby.app.domain.auth.AuthRepository
 import com.closeby.feature.servicelisting.data.local.LocalRecentlyViewedRepository
 import com.closeby.feature.servicelisting.data.local.LocalSavedServiceRepository
-import com.closeby.feature.servicelisting.data.repository.SupabaseSavedServiceRepository
+import com.closeby.feature.servicelisting.data.local.SavedServiceSyncQueue
+import com.closeby.feature.servicelisting.data.repository.OfflineAwareSavedServiceRepository
 import com.closeby.feature.servicelisting.domain.repository.RecentlyViewedRepository
 import com.closeby.feature.servicelisting.domain.repository.SavedServiceRepository
 
@@ -16,14 +18,17 @@ object SavedDependenciesFactory {
 
     private var localSaved: LocalSavedServiceRepository? = null
     private var localHistory: LocalRecentlyViewedRepository? = null
+    private var offlineSaved: OfflineAwareSavedServiceRepository? = null
 
     fun savedServiceRepository(context: Context, authRepository: AuthRepository): SavedServiceRepository {
         val local = localSaved ?: LocalSavedServiceRepository(context).also { localSaved = it }
         return if (hasSupabase) {
-            SupabaseSavedServiceRepository(
-                userIdProvider = { authRepository.getCurrentSession()?.userId },
-                remote = com.closeby.feature.servicelisting.data.remote.SavedServiceRemoteDataSource()
-            )
+            offlineSaved ?: OfflineAwareSavedServiceRepository(
+                local = local,
+                syncQueue = SavedServiceSyncQueue(context),
+                networkMonitor = NetworkMonitorHolder.get(context),
+                userIdProvider = { authRepository.getCurrentSession()?.userId }
+            ).also { offlineSaved = it }
         } else {
             local
         }

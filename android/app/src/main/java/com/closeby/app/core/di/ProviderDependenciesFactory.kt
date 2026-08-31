@@ -46,7 +46,7 @@ object ProviderDependenciesFactory {
     fun serviceRequestRepository(context: Context): ServiceRequestRepository =
         if (hasSupabase) {
             SupabaseServiceRequestRepository(
-                serviceRepository = ServiceRepositoryFactory.create(),
+                serviceRepository = ServiceRepositoryFactory.create(context),
                 availabilityRepository = availabilityRepository(),
                 clientSessionStorage = clientSessionStorage(context)
             )

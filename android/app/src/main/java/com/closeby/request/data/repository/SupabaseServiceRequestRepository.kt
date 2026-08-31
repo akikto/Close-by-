@@ -149,7 +149,7 @@ class SupabaseServiceRequestRepository(
         val dto = remote.updateStatus(requestId, ServiceRequestStatus.CANCELLED.name)
         ServiceRequestMapper.toDomain(dto)
             ?: throw IllegalStateException("Updated request has invalid data.")
-    }
+    }.onSuccess { RequestNotificationBridge.publish(RequestNotificationEvent.RequestCancelled(it.id)) }
 
     private suspend fun cancelAnonymousCachedRequest(
         cached: ServiceRequest,

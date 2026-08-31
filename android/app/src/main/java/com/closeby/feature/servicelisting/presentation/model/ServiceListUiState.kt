@@ -19,7 +19,9 @@ sealed interface ServiceListUiState {
         val sortOption: SortOption = SortOption.DEFAULT,
         val totalCount: Int = listings.size,
         val hasMore: Boolean = false,
-        val isLoadingMore: Boolean = false
+        val isLoadingMore: Boolean = false,
+        val isOffline: Boolean = false,
+        val isShowingCachedData: Boolean = false
     ) : ServiceListUiState
 
     data class Empty(
