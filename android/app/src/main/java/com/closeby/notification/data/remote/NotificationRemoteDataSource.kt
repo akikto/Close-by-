@@ -35,13 +35,14 @@ class NotificationRemoteDataSource(
             .insert(dto) { select() }
             .decodeSingle<NotificationDto>()
 
-    suspend fun markRead(id: String): Unit =
+    suspend fun markRead(id: String) {
         client.from("notifications")
             .update(NotificationReadUpdateDto()) {
                 filter { eq("id", id) }
             }
+    }
 
-    suspend fun markAllRead(userId: String): Unit =
+    suspend fun markAllRead(userId: String) {
         client.from("notifications")
             .update(NotificationReadUpdateDto()) {
                 filter {
@@ -49,4 +50,5 @@ class NotificationRemoteDataSource(
                     eq("is_read", false)
                 }
             }
+    }
 }
