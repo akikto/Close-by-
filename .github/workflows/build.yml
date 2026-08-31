@@ -34,7 +34,15 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
+
+      - name: Print build errors on failure
+        if: failure()
+        run: |
+          echo "=== Gradle build errors ==="
+          grep -E "^(e:|FAILURE:|> Task :app:compile)" gradle-build.log | tail -80 || tail -120 gradle-build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

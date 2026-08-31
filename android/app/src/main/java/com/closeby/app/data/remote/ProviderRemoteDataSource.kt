@@ -18,7 +18,8 @@ class ProviderRemoteDataSource(
             .select(columns = Columns.ALL) {
                 filter { eq("id", id) }
             }
-            .decodeSingleOrNull<ProviderDto>()
+            .decodeList<ProviderDto>()
+            .firstOrNull()
     }
 
     suspend fun getAllProviders(): List<ProviderDto> {
