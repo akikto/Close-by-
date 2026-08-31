@@ -2,6 +2,8 @@ package com.closeby.notification.domain.handler
 
 import com.closeby.feature.provider.data.remote.ProviderManagementRemoteDataSource
 import com.closeby.notification.domain.model.AppNotification
+import com.closeby.notification.domain.model.AppNotificationEvent
+import com.closeby.notification.domain.model.AppNotificationEventBridge
 import com.closeby.notification.domain.model.NotificationReferenceType
 import com.closeby.notification.domain.model.NotificationType
 import com.closeby.notification.domain.repository.NotificationRepository
@@ -16,14 +18,15 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 /**
- * Subscribes to [RequestNotificationBridge] and persists in-app notifications.
+ * Subscribes to request and app notification bridges and persists in-app notifications.
  *
- * FCM push delivery is not configured — notifications are stored and shown in-app only.
+ * FCM push delivery is optional via [PushNotificationGateway]; in-app storage is primary.
  */
 class NotificationEventHandler(
     private val notificationRepository: NotificationRepository,
     private val serviceRequestRepository: ServiceRequestRepository,
-    private val resolveProviderUserId: suspend (providerId: String) -> String?
+    private val resolveProviderUserId: suspend (providerId: String) -> String?,
+    private val deduplicator: NotificationDeduplicator = NotificationDeduplicator()
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var subscribed = false
@@ -32,11 +35,14 @@ class NotificationEventHandler(
         if (subscribed) return
         subscribed = true
         RequestNotificationBridge.subscribe { event ->
-            scope.launch { handle(event) }
+            scope.launch { handleRequestEvent(event) }
+        }
+        AppNotificationEventBridge.subscribe { event ->
+            scope.launch { handleAppEvent(event) }
         }
     }
 
-    private suspend fun handle(event: RequestNotificationEvent) {
+    private suspend fun handleRequestEvent(event: RequestNotificationEvent) {
         val request = serviceRequestRepository.getRequestById(event.requestId).getOrNull() ?: return
         val (targetUserId, type, title) = when (event) {
             is RequestNotificationEvent.RequestAccepted -> Triple(
@@ -54,6 +60,11 @@ class NotificationEventHandler(
                 NotificationType.REQUEST_COMPLETED,
                 "Request completed"
             )
+            is RequestNotificationEvent.RequestCancelled -> Triple(
+                resolveProviderUserId(request.providerId),
+                NotificationType.REQUEST_CANCELLED,
+                "Request cancelled"
+            )
             is RequestNotificationEvent.NewProviderRequest -> Triple(
                 resolveProviderUserId(request.providerId),
                 NotificationType.NEW_PROVIDER_REQUEST,
@@ -61,15 +72,54 @@ class NotificationEventHandler(
             )
         }
         val userId = targetUserId?.takeIf { it.isNotBlank() } ?: return
-
-        val notification = AppNotification(
-            id = UUID.randomUUID().toString(),
+        val eventKey = NotificationDeduplicator.eventKey(
+            userId, type, NotificationReferenceType.REQUEST, event.requestId
+        )
+        persist(
             userId = userId,
             type = type,
             title = title,
             body = event.message,
             referenceType = NotificationReferenceType.REQUEST,
             referenceId = event.requestId,
+            eventKey = eventKey
+        )
+    }
+
+    private suspend fun handleAppEvent(event: AppNotificationEvent) {
+        persist(
+            userId = event.userId,
+            type = event.type,
+            title = event.title,
+            body = event.body,
+            referenceType = event.referenceType,
+            referenceId = event.referenceId,
+            eventKey = event.eventKey
+        )
+    }
+
+    private suspend fun persist(
+        userId: String,
+        type: NotificationType,
+        title: String,
+        body: String,
+        referenceType: String?,
+        referenceId: String?,
+        eventKey: String
+    ) {
+        if (deduplicator.isDuplicate(eventKey)) return
+        if (deduplicator.existsInRepository(notificationRepository, userId, type, referenceType, referenceId)) {
+            return
+        }
+
+        val notification = AppNotification(
+            id = UUID.randomUUID().toString(),
+            userId = userId,
+            type = type,
+            title = title,
+            body = body,
+            referenceType = referenceType,
+            referenceId = referenceId,
             isRead = false,
             createdAt = System.currentTimeMillis()
         )
@@ -90,7 +140,6 @@ class NotificationEventHandler(
             remote.getProviderById(providerId)?.userId
         }
 
-        /** Mock fallback when provider rows have no linked auth user. */
         fun mockProviderUserResolver(demoUserId: String): suspend (String) -> String? =
             { _ -> demoUserId }
     }

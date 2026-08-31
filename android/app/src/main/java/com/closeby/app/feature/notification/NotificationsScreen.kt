@@ -46,7 +46,11 @@ import java.util.Date
 @Composable
 fun NotificationsRoute(
     onOpenRequestDetails: (requestId: String) -> Unit = {},
-    onOpenProviderRequestDetails: (providerId: String, requestId: String) -> Unit = { _, _ -> }
+    onOpenProviderRequestDetails: (providerId: String, requestId: String) -> Unit = { _, _ -> },
+    onOpenVerification: () -> Unit = {},
+    onOpenAdvertisement: (adId: String) -> Unit = {},
+    onOpenAdmin: () -> Unit = {},
+    onOpenProfile: () -> Unit = {}
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -82,7 +86,11 @@ fun NotificationsRoute(
             navigateFromNotification(
                 notification = notification,
                 onOpenRequestDetails = onOpenRequestDetails,
-                onOpenProviderRequestDetails = onOpenProviderRequestDetails
+                onOpenProviderRequestDetails = onOpenProviderRequestDetails,
+                onOpenVerification = onOpenVerification,
+                onOpenAdvertisement = onOpenAdvertisement,
+                onOpenAdmin = onOpenAdmin,
+                onOpenProfile = onOpenProfile
             )
         },
         onRetry = viewModel::load
@@ -92,19 +100,31 @@ fun NotificationsRoute(
 private fun navigateFromNotification(
     notification: AppNotification,
     onOpenRequestDetails: (String) -> Unit,
-    onOpenProviderRequestDetails: (providerId: String, requestId: String) -> Unit
+    onOpenProviderRequestDetails: (providerId: String, requestId: String) -> Unit,
+    onOpenVerification: () -> Unit,
+    onOpenAdvertisement: (String) -> Unit,
+    onOpenAdmin: () -> Unit,
+    onOpenProfile: () -> Unit
 ) {
-    if (notification.referenceType != NotificationReferenceType.REQUEST) return
-    val requestId = notification.referenceId ?: return
-    when (notification.type) {
-        NotificationType.NEW_PROVIDER_REQUEST -> {
-            // Provider-facing request notifications need provider context for the details route.
-            // Navigation supplies provider id when available from reference metadata in later phases.
-            onOpenRequestDetails(requestId)
+    when (notification.referenceType) {
+        NotificationReferenceType.REQUEST -> {
+            val requestId = notification.referenceId ?: return
+            when (notification.type) {
+                NotificationType.NEW_PROVIDER_REQUEST,
+                NotificationType.REQUEST_CANCELLED ->
+                    onOpenProviderRequestDetails("", requestId)
+                NotificationType.REQUEST_ACCEPTED,
+                NotificationType.REQUEST_REJECTED,
+                NotificationType.REQUEST_COMPLETED -> onOpenRequestDetails(requestId)
+                else -> onOpenRequestDetails(requestId)
+            }
         }
-        NotificationType.REQUEST_ACCEPTED,
-        NotificationType.REQUEST_REJECTED,
-        NotificationType.REQUEST_COMPLETED -> onOpenRequestDetails(requestId)
+        NotificationReferenceType.VERIFICATION -> onOpenVerification()
+        NotificationReferenceType.AD -> notification.referenceId?.let(onOpenAdvertisement)
+        NotificationReferenceType.ADMIN -> onOpenAdmin()
+        NotificationReferenceType.ACCOUNT -> onOpenProfile()
+        NotificationReferenceType.REVIEW,
+        NotificationReferenceType.REPORT -> notification.referenceId?.let(onOpenRequestDetails)
         else -> Unit
     }
 }

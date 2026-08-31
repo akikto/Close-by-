@@ -18,6 +18,9 @@ sealed class RequestNotificationEvent(val message: String) {
 
     data class NewProviderRequest(override val requestId: String) :
         RequestNotificationEvent("New service request received.")
+
+    data class RequestCancelled(override val requestId: String) :
+        RequestNotificationEvent("A service request was cancelled.")
 }
 
 object RequestNotificationBridge {
