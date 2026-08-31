@@ -31,3 +31,9 @@ val topLevelDestinations = listOf(
     TopLevelDestination.Notifications,
     TopLevelDestination.Profile
 )
+
+object AppRoutes {
+    const val SERVICE_DETAILS = "service/{serviceId}"
+
+    fun serviceDetails(serviceId: String): String = "service/$serviceId"
+}

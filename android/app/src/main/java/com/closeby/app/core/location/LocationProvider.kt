@@ -12,12 +12,14 @@ data class GeoPoint(
 )
 
 /**
- * Contract for reading the device's current location.
- *
- * The real implementation (backed by FusedLocationProviderClient) and the
- * full "nearby providers" search algorithm are out of scope for the base
- * project and will be built by the location/explore feature work.
+ * @deprecated Use [com.closeby.feature.nearby.location.LocationProvider] for device
+ * location and [com.closeby.feature.servicelisting.domain.repository.LocationProvider]
+ * for listing distance enrichment via [com.closeby.app.data.location.ServicelistingLocationAdapter].
  */
+@Deprecated(
+    message = "Use nearby.location.LocationProvider + ServicelistingLocationAdapter",
+    replaceWith = ReplaceWith("com.closeby.feature.nearby.location.LocationProvider")
+)
 interface LocationProvider {
 
     /** Emits the best-effort last known location, if permission is granted. */

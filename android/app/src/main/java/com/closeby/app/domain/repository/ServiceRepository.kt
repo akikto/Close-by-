@@ -1,7 +1,7 @@
 package com.closeby.app.domain.repository
 
 import com.closeby.app.domain.model.ServiceListing
-import com.closeby.app.domain.model.ServiceCategory
+import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 
 /**
  * Contract for reading service listings. Backed by Supabase/PostgreSQL

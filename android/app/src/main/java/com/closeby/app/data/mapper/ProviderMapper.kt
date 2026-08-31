@@ -2,7 +2,7 @@ package com.closeby.app.data.mapper
 
 import com.closeby.app.data.model.ProviderDto
 import com.closeby.app.domain.model.Provider
-import com.closeby.app.domain.model.ServiceCategory
+import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 
 /**
  * Maps between the Supabase wire model (ProviderDto) and the domain
@@ -12,8 +12,12 @@ import com.closeby.app.domain.model.ServiceCategory
 fun ProviderDto.toDomain(): Provider = Provider(
     id = id,
     name = name,
-    category = ServiceCategory.valueOf(category.uppercase()),
+    category = parseCategory(category),
     phoneNumber = phone_number,
     latitude = latitude,
     longitude = longitude
 )
+
+private fun parseCategory(raw: String): ServiceCategory =
+    runCatching { ServiceCategory.valueOf(raw.trim().uppercase()) }
+        .getOrDefault(ServiceCategory.VEHICLES)

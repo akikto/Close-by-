@@ -37,13 +37,33 @@ class ServiceListingViewModel(
     private val _uiState = MutableStateFlow<ServiceListUiState>(ServiceListUiState.Loading)
     val uiState: StateFlow<ServiceListUiState> = _uiState.asStateFlow()
 
+    private val _locationStatus = MutableStateFlow(com.closeby.feature.servicelisting.domain.model.LocationStatus.UNAVAILABLE)
+    val locationStatus: StateFlow<com.closeby.feature.servicelisting.domain.model.LocationStatus> =
+        _locationStatus.asStateFlow()
+
     private var allListings: List<ServiceListing> = emptyList()
     private var currentQuery: String = ""
     private var currentFilter: ServiceFilter = ServiceFilter()
     private var currentSort: SortOption = SortOption.DEFAULT
 
     init {
+        locationProvider.start(viewModelScope)
+        viewModelScope.launch {
+            locationProvider.observeLocationStatus().collect { _locationStatus.value = it }
+        }
+        viewModelScope.launch {
+            locationProvider.observeDistanceRefresh().collect {
+                if (allListings.isNotEmpty()) {
+                    allListings = locationProvider.attachDistances(allListings)
+                    applyPipeline()
+                }
+            }
+        }
         loadServices()
+    }
+
+    fun retryLocation() {
+        locationProvider.retryLocation()
     }
 
     fun loadServices() {

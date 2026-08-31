@@ -1,5 +1,7 @@
 package com.closeby.feature.servicelisting.domain.model
 
+import com.closeby.feature.nearby.util.DistanceFormatter
+
 /**
  * Distance/location data CONSUMED from Agent 2's Location + Nearby module.
  *
@@ -16,10 +18,10 @@ data class DistanceInfo(
     val distanceKm: Double?,
     val status: LocationStatus
 ) {
-    /** Display string such as "1.2 km away", or null when distance is unknown. */
+    /** Display string such as "850 m away" or "2.4 km away", or null when unknown. */
     fun formatted(): String? =
         distanceKm?.let { km ->
-            if (km < 1.0) "${(km * 1000).toInt()} m away" else "%.1f km away".format(km)
+            DistanceFormatter.formatWithSuffix(km * 1000.0)
         }
 }
 
