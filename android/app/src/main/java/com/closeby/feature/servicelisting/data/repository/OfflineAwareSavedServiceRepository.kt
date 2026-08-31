@@ -12,7 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
@@ -105,13 +104,11 @@ class OfflineAwareSavedServiceRepository(
         if (syncStarted) return
         syncStarted = true
         scope.launch {
-            networkMonitor.status
-                .distinctUntilChanged()
-                .collect { status ->
-                    if (status == NetworkStatus.ONLINE) {
-                        syncPending()
-                    }
+            networkMonitor.status.collect { status ->
+                if (status == NetworkStatus.ONLINE) {
+                    syncPending()
                 }
+            }
         }
     }
 }

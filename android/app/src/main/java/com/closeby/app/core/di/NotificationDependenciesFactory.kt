@@ -9,6 +9,7 @@ import com.closeby.notification.domain.repository.NotificationRepository
 import com.closeby.request.domain.repository.ServiceRequestRepository
 import com.closeby.notification.domain.push.NoOpPushNotificationGateway
 import com.closeby.notification.domain.push.PushNotificationGateway
+import kotlinx.coroutines.runBlocking
 
 /**
  * Notification module wiring. FCM is not configured — in-app notifications only.
