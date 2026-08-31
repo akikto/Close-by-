@@ -36,14 +36,7 @@ jobs:
         working-directory: android
         run: |
           set -o pipefail
-          if ! ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log; then
-            echo "=== Build failure excerpt ==="
-            tail -80 ../gradle-build.log
-            grep -E "e: file:|Unresolved reference|FAILED|There were failing tests|BUILD FAILED" ../gradle-build.log | head -50 | while IFS= read -r line; do
-              echo "::error title=Build Error::$line"
-            done
-            exit 1
-          fi
+          ./gradlew test assembleDebug lint --stacktrace 2>&1 | tee ../gradle-build.log
 
       - name: Print build errors on failure
         if: failure()
