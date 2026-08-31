@@ -12,12 +12,15 @@ import com.closeby.feature.servicelisting.domain.model.PriceUnit
 import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.feature.servicelisting.domain.model.ServiceSubcategory
+import com.closeby.feature.nearby.util.DistanceCalculator
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -39,6 +42,7 @@ class ServicelistingLocationAdapterTest {
     @Test
     fun `attachDistances computes haversine distance in km`() = runTest {
         session.bind(this)
+        session.coordinates.filterNotNull().first()
 
         val listings = listOf(sampleListing(lat = 12.9716, lng = 77.6046))
         val enriched = adapter.attachDistances(listings)
