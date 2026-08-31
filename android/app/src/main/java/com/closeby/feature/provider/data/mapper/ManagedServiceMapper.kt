@@ -133,9 +133,6 @@ object ManagedServiceMapper {
             contactNumber = input.contactNumber.trim()
         )
 
-    private fun parseCategory(raw: String): ServiceCategory? =
-        ManagedServiceMapper.parseCategory(raw)
-
     private fun parseSubcategory(raw: String): ServiceSubcategory? =
         runCatching { ServiceSubcategory.valueOf(raw.trim().uppercase()) }.getOrNull()
 
