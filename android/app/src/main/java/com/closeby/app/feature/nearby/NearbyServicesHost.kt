@@ -1,5 +1,6 @@
 package com.closeby.app.feature.nearby
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.closeby.app.core.di.NearbyDependenciesFactory
 import com.closeby.app.core.permissions.rememberLocationPermissionState
+import com.closeby.app.core.ui.components.OfflineBanner
 import com.closeby.feature.nearby.ui.LocationErrorState
 import com.closeby.feature.nearby.ui.LocationErrorReason
 import com.closeby.feature.nearby.ui.LocationPermissionView
@@ -40,6 +42,9 @@ fun NearbyServicesHost(
     )
 ) {
     val locationStatus by viewModel.locationStatus.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val stack = rememberNearbyStack()
+    val networkStatus by stack.networkMonitor.status.collectAsState()
     val permissionState = rememberLocationPermissionState { granted ->
         if (granted) viewModel.retryLocation()
     }
@@ -83,14 +88,21 @@ fun NearbyServicesHost(
                 )
             }
             else -> {
-                ServiceListingScreen(
-                    viewModel = viewModel,
-                    onServiceClick = onServiceClick,
-                    modifier = Modifier.fillMaxSize(),
-                    showFullFilters = showFullFilters,
-                    maxListings = maxListings,
-                    showSearchBar = showSearchBar
-                )
+                val success = uiState as? com.closeby.feature.servicelisting.presentation.model.ServiceListUiState.Success
+                Column(modifier = Modifier.fillMaxSize()) {
+                    OfflineBanner(
+                        status = networkStatus,
+                        isShowingCachedData = success?.isShowingCachedData == true
+                    )
+                    ServiceListingScreen(
+                        viewModel = viewModel,
+                        onServiceClick = onServiceClick,
+                        modifier = Modifier.fillMaxSize(),
+                        showFullFilters = showFullFilters,
+                        maxListings = maxListings,
+                        showSearchBar = showSearchBar
+                    )
+                }
             }
         }
     }

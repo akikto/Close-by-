@@ -52,7 +52,7 @@ fun SavedServicesRoute(
                             context,
                             ProviderDependenciesFactory.authRepository()
                         ),
-                        serviceRepository = com.closeby.app.core.di.ServiceRepositoryFactory.create()
+                        serviceRepository = com.closeby.app.core.di.ServiceRepositoryFactory.create(context)
                     ) as T
             }
         }

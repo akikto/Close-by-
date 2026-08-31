@@ -2,6 +2,11 @@ package com.closeby.feature.servicelisting.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.closeby.app.core.error.AppErrorMapper
+import com.closeby.app.core.error.retryWithBackoff
+import com.closeby.app.core.network.NetworkMonitor
+import com.closeby.app.core.network.NetworkStatus
+import com.closeby.app.data.repository.OfflineAwareServiceRepository
 import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 import com.closeby.feature.servicelisting.domain.model.ServiceFilter
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
@@ -28,6 +33,7 @@ class ServiceListingViewModel(
     private val serviceRepository: ServiceRepository,
     private val locationProvider: LocationProvider,
     private val blockedProviderIdsProvider: suspend () -> Set<String> = { emptySet() },
+    private val networkMonitor: NetworkMonitor? = null,
     private val searchServicesUseCase: SearchServicesUseCase = SearchServicesUseCase(),
     private val filterServicesUseCase: FilterServicesUseCase = FilterServicesUseCase(),
     private val sortServicesUseCase: SortServicesUseCase = SortServicesUseCase(locationProvider),
@@ -47,6 +53,8 @@ class ServiceListingViewModel(
     private var currentQuery: String = ""
     private var currentFilter: ServiceFilter = ServiceFilter()
     private var currentSort: SortOption = SortOption.DEFAULT
+    private var isOffline = false
+    private var isShowingCachedData = false
     private val queryFlow = MutableStateFlow("")
     private var searchJob: Job? = null
 
@@ -84,8 +92,13 @@ class ServiceListingViewModel(
         _uiState.value = ServiceListUiState.Loading
         displayedCount = pageSize
         viewModelScope.launch {
-            serviceRepository.fetchServices()
+            isOffline = networkMonitor?.status?.value == NetworkStatus.OFFLINE
+            retryWithBackoff(times = 3) {
+                serviceRepository.fetchServices()
+            }
                 .onSuccess { listings ->
+                    isShowingCachedData =
+                        (serviceRepository as? OfflineAwareServiceRepository)?.isShowingCachedData == true
                     val blockedIds = blockedProviderIdsProvider()
                     val visible = listings.filter { it.providerId !in blockedIds }
                     val enriched = locationProvider.attachDistances(visible)
@@ -94,7 +107,7 @@ class ServiceListingViewModel(
                 }
                 .onFailure { throwable ->
                     _uiState.value = ServiceListUiState.Error(
-                        message = throwable.message ?: "Something went wrong. Please try again.",
+                        message = AppErrorMapper.toUserMessage(throwable),
                         isRetryable = true
                     )
                 }
@@ -196,7 +209,9 @@ class ServiceListingViewModel(
             sortOption = currentSort,
             totalCount = processedListings.size,
             hasMore = displayedCount < processedListings.size,
-            isLoadingMore = false
+            isLoadingMore = false,
+            isOffline = isOffline,
+            isShowingCachedData = isShowingCachedData
         )
     }
 

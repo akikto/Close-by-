@@ -28,6 +28,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.app.core.di.ServiceRepositoryFactory
+import com.closeby.app.core.network.NetworkMonitorHolder
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.request.presentation.CreateRequestFormState
 import com.closeby.request.presentation.CreateServiceRequestViewModel
@@ -50,7 +51,7 @@ fun CreateServiceRequestRoute(
 
     LaunchedEffect(serviceId) {
         withContext(Dispatchers.IO) {
-            ServiceRepositoryFactory.create().getServiceById(serviceId)
+            ServiceRepositoryFactory.create(context).getServiceById(serviceId)
                 .onSuccess { listing = it }
                 .onFailure { loadError = it.message ?: "Service not found." }
         }
@@ -93,9 +94,10 @@ fun CreateServiceRequestRoute(
                                         providerPhone = service.contactNumber,
                                         customerId = null,
                                         repository = ProviderDependenciesFactory.serviceRequestRepository(context),
-                                        serviceRepository = ServiceRepositoryFactory.create(),
+                                        serviceRepository = ServiceRepositoryFactory.create(context),
                                         availabilityRepository = ProviderDependenciesFactory.availabilityRepository(),
-                                        clientSessionStorage = ProviderDependenciesFactory.clientSessionStorage(context)
+                                        clientSessionStorage = ProviderDependenciesFactory.clientSessionStorage(context),
+                                        networkMonitor = NetworkMonitorHolder.get(context)
                                     ) as T
                             }
                         }
