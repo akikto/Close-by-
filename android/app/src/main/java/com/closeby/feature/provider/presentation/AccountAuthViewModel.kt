@@ -91,6 +91,16 @@ class AccountAuthViewModel(
         }
     }
 
+    fun resendOtp() {
+        val email = pendingEmail ?: return
+        sendOtp(email)
+    }
+
+    fun cancelOtp() {
+        pendingEmail = null
+        _authState.value = AuthState.SignedOut
+    }
+
     fun clearError() {
         if (_authState.value is AuthState.Error) {
             _authState.value = if (pendingEmail != null) {

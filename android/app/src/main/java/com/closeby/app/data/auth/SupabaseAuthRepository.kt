@@ -20,7 +20,7 @@ class SupabaseAuthRepository(
         client.auth.signInWith(OTP) {
             this.email = email.trim()
         }
-    }
+    }.mapAuthFailure()
 
     override suspend fun verifyEmailOtp(email: String, token: String): Result<AuthSession> =
         runCatching {
@@ -35,7 +35,7 @@ class SupabaseAuthRepository(
                 userId = user.id,
                 email = user.email ?: email.trim()
             )
-        }
+        }.mapAuthFailure()
 
     override suspend fun getCurrentSession(): AuthSession? {
         val user = client.auth.currentUserOrNull() ?: return null
@@ -65,4 +65,22 @@ class SupabaseAuthRepository(
                 requestedAt = Instant.parse(dto.requestedAt).toEpochMilli()
             )
         }
+}
+
+private fun <T> Result<T>.mapAuthFailure(): Result<T> = recoverCatching { error ->
+    throw IllegalStateException(authErrorMessage(error), error)
+}
+
+private fun authErrorMessage(error: Throwable): String {
+    val raw = error.message.orEmpty()
+    return when {
+        raw.contains("rate limit", ignoreCase = true) ->
+            "Too many attempts. Please wait a minute and try again."
+        raw.contains("invalid", ignoreCase = true) && raw.contains("email", ignoreCase = true) ->
+            "That email address is not valid."
+        raw.contains("signup", ignoreCase = true) && raw.contains("disabled", ignoreCase = true) ->
+            "Email sign-in is disabled for this project. Contact support."
+        raw.isNotBlank() -> raw
+        else -> "Could not complete sign-in. Check your connection and try again."
+    }
 }

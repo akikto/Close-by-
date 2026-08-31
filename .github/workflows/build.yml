@@ -32,6 +32,19 @@ jobs:
             gradle wrapper --gradle-version 8.7
           fi
 
+      - name: Configure Supabase credentials
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            printf 'SUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' \
+              "$SUPABASE_URL" "$SUPABASE_ANON_KEY" >> android/local.properties
+            echo "Supabase credentials configured for CI build."
+          else
+            echo "No Supabase secrets found — APK will use demo auth (OTP emails are not sent)."
+          fi
+
       - name: Build debug APK
         working-directory: android
         run: |

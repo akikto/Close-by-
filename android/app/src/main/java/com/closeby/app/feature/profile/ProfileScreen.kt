@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.AdminDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.app.core.di.SavedDependenciesFactory
+import com.closeby.app.domain.auth.AuthEnvironment
 import com.closeby.app.domain.auth.AuthState
 import com.closeby.app.feature.saved.MigrationPromptState
 import com.closeby.app.feature.saved.SavedServiceMigrationDialog
@@ -44,7 +45,6 @@ import com.closeby.app.feature.saved.SavedServiceMigrationManager
 import com.closeby.feature.provider.presentation.AccountAuthViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -158,6 +158,15 @@ fun ProfileScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (!AuthEnvironment.usesSupabase) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Demo build: OTP emails are not sent. After entering your email, use code " +
+                        "${AuthEnvironment.DEMO_OTP_CODE} to sign in.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
 
             when (val state = authState) {
@@ -206,11 +215,33 @@ fun ProfileScreen(
                     CircularProgressIndicator()
                 }
                 is AuthState.OtpRequested -> {
+                    Text(
+                        text = "Enter the code sent to ${state.email}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!AuthEnvironment.usesSupabase) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No email was sent in this demo build. Use ${AuthEnvironment.DEMO_OTP_CODE}.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Check your inbox and spam folder. Delivery can take up to a minute.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = otp,
                         onValueChange = { otp = it },
                         label = { Text("Verification code") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
@@ -218,6 +249,18 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) { Text("Verify & sign in") }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.resendOtp() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) { Text("Resend code") }
+                    TextButton(
+                        onClick = {
+                            otp = ""
+                            viewModel.cancelOtp()
+                        }
+                    ) { Text("Use a different email") }
                 }
                 AuthState.SignedOut -> {
                     OutlinedTextField(
