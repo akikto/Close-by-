@@ -36,7 +36,13 @@ jobs:
         working-directory: android
         run: |
           set -o pipefail
-          ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
+          if ! ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log; then
+            echo "=== Kotlin compile errors ==="
+            grep -E "^e:" ../gradle-build.log | head -30 | while IFS= read -r line; do
+              echo "::error title=Kotlin Error::$line"
+            done
+            exit 1
+          fi
 
       - name: Print build errors on failure
         if: failure()
