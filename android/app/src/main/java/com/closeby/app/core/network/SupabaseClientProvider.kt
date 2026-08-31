@@ -4,7 +4,7 @@ import com.closeby.app.BuildConfig
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.gotrue.GoTrue
+import io.github.jan.supabase.gotrue.Auth
 
 /**
  * Single Supabase client instance for the app.
@@ -25,7 +25,7 @@ object SupabaseClientProvider {
             supabaseKey = BuildConfig.SUPABASE_ANON_KEY
         ) {
             install(Postgrest)
-            install(GoTrue)
+            install(Auth)
         }
     }
 }
