@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 class ServiceListingViewModel(
     private val serviceRepository: ServiceRepository,
     private val locationProvider: LocationProvider,
+    private val blockedProviderIdsProvider: suspend () -> Set<String> = { emptySet() },
     private val searchServicesUseCase: SearchServicesUseCase = SearchServicesUseCase(),
     private val filterServicesUseCase: FilterServicesUseCase = FilterServicesUseCase(),
     private val sortServicesUseCase: SortServicesUseCase = SortServicesUseCase(locationProvider)
@@ -71,7 +72,9 @@ class ServiceListingViewModel(
         viewModelScope.launch {
             serviceRepository.fetchServices()
                 .onSuccess { listings ->
-                    val enriched = locationProvider.attachDistances(listings)
+                    val blockedIds = blockedProviderIdsProvider()
+                    val visible = listings.filter { it.providerId !in blockedIds }
+                    val enriched = locationProvider.attachDistances(visible)
                     allListings = enriched
                     applyPipeline()
                 }

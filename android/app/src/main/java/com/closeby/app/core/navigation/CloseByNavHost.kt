@@ -7,6 +7,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.closeby.app.feature.advertisement.CreateAdvertisementRoute
+import com.closeby.app.feature.advertisement.MyAdvertisementsRoute
 import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
 import com.closeby.app.feature.notification.NotificationsScreen
@@ -62,6 +64,12 @@ fun CloseByNavHost(
             ProfileScreen(
                 onProviderProfile = { providerId ->
                     navController.navigate(AppRoutes.providerProfile(providerId))
+                },
+                onMyAdvertisements = { ownerId ->
+                    navController.navigate(AppRoutes.myAdvertisements(ownerId))
+                },
+                onCreateAdvertisement = { ownerId ->
+                    navController.navigate(AppRoutes.createAdvertisement(ownerId))
                 }
             )
         }
@@ -202,6 +210,33 @@ fun CloseByNavHost(
             ProviderRequestsRoute(
                 providerId = providerId,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = AppRoutes.CREATE_ADVERTISEMENT,
+            arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getString("ownerId").orEmpty()
+            CreateAdvertisementRoute(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onCreated = {
+                    navController.popBackStack()
+                    navController.navigate(AppRoutes.myAdvertisements(ownerId))
+                }
+            )
+        }
+
+        composable(
+            route = AppRoutes.MY_ADVERTISEMENTS,
+            arguments = listOf(navArgument("ownerId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val ownerId = backStackEntry.arguments?.getString("ownerId").orEmpty()
+            MyAdvertisementsRoute(
+                ownerId = ownerId,
+                onBack = { navController.popBackStack() },
+                onCreateAd = { navController.navigate(AppRoutes.createAdvertisement(ownerId)) }
             )
         }
 

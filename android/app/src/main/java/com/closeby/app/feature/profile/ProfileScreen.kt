@@ -34,6 +34,8 @@ import com.closeby.feature.provider.presentation.ProviderAuthViewModel
 @Composable
 fun ProfileScreen(
     onProviderProfile: (providerId: String) -> Unit,
+    onMyAdvertisements: (String) -> Unit,
+    onCreateAdvertisement: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: ProviderAuthViewModel = viewModel(
@@ -80,6 +82,22 @@ fun ProfileScreen(
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Text("Provider Profile")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { onMyAdvertisements(state.userId) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("My Advertisements")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { onCreateAdvertisement(state.userId) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Create Advertisement")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(

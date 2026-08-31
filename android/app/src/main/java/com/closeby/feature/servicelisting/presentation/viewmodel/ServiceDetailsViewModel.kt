@@ -61,5 +61,6 @@ interface ServiceDetailsActions {
     fun onSmsProvider(phoneNumber: String)
     fun onViewProviderProfile(providerId: String)
     fun onRequestService(serviceId: String, providerId: String, serviceTitle: String, providerName: String, providerPhone: String)
+    fun onReportService(serviceId: String)
     fun onBack()
 }

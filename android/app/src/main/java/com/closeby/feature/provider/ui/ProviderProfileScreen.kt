@@ -46,6 +46,8 @@ fun ProviderProfileScreen(
     onEditAvailability: () -> Unit,
     onServiceClick: (String) -> Unit,
     onProviderRequests: () -> Unit,
+    onVerification: () -> Unit = {},
+    onReportProvider: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -110,6 +112,15 @@ fun ProviderProfileScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedButton(onClick = onEditAvailability, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
                             Text("Edit Availability")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(onClick = onVerification, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
+                            Text("Verification")
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedButton(onClick = onReportProvider, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
+                            Text("Report provider")
                         }
                     }
                 }

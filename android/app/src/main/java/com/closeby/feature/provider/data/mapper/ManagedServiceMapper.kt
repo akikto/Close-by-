@@ -12,6 +12,7 @@ import com.closeby.feature.servicelisting.domain.model.PriceUnit
 import com.closeby.feature.servicelisting.domain.model.ServiceCategory
 import com.closeby.feature.servicelisting.domain.model.ServiceSubcategory
 import com.closeby.availability.domain.model.ProviderAvailability
+import com.closeby.trust.domain.model.VerificationStatus
 
 object ProviderProfileMapper {
 
@@ -28,7 +29,9 @@ object ProviderProfileMapper {
             name = provider.name,
             profileImageUrl = provider.profileImageUrl,
             category = category,
-            isVerified = provider.isVerified,
+            isVerified = provider.verificationStatus
+                ?.let { VerificationStatus.fromRaw(it).isVerified }
+                ?: provider.isVerified,
             rating = provider.rating,
             reviewCount = provider.reviewCount,
             phoneNumber = if (isOwnProfile) provider.phoneNumber else null,

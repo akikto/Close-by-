@@ -131,6 +131,14 @@ fun ServiceDetailsScreen(
                     Text("View provider profile")
                 }
 
+                OutlinedButton(
+                    onClick = { actions.onReportService(listing.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Report listing")
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
