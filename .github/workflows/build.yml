@@ -36,7 +36,19 @@ jobs:
         working-directory: android
         run: |
           set -o pipefail
-          ./gradlew test assembleDebug lint --stacktrace 2>&1 | tee ../gradle-build.log
+          ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
+
+      - name: Lint
+        working-directory: android
+        continue-on-error: true
+        id: lint
+        run: ./gradlew lint --stacktrace 2>&1 | tee -a ../gradle-build.log
+
+      - name: Fail if lint failed
+        if: steps.lint.outcome == 'failure'
+        run: |
+          grep -E "Lint|lint|Error:" ../gradle-build.log | tail -30
+          exit 1
 
       - name: Print build errors on failure
         if: failure()
