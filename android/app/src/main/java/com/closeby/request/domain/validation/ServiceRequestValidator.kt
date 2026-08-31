@@ -15,6 +15,16 @@ sealed class ServiceRequestValidationError(message: String) : Exception(message)
         ServiceRequestValidationError("End time must be after start time.")
     data object NegativeBudget :
         ServiceRequestValidationError("Budget cannot be negative.")
+    data object EmptyDuration :
+        ServiceRequestValidationError("Duration is required.")
+    data object NoteTooLong :
+        ServiceRequestValidationError("Note is too long (max 500 characters).")
+    data object ProviderUnavailable :
+        ServiceRequestValidationError("Provider is not available at the requested time.")
+    data object ServiceInactive :
+        ServiceRequestValidationError("This service is no longer available.")
+    data object MissingContact :
+        ServiceRequestValidationError("Name and phone are required to send a request.")
     data class InvalidStatusTransition(
         val from: ServiceRequestStatus,
         val to: ServiceRequestStatus
@@ -27,6 +37,29 @@ sealed class ServiceRequestValidationError(message: String) : Exception(message)
  * ViewModels and repository implementations.
  */
 object ServiceRequestValidator {
+
+    const val MAX_NOTE_LENGTH = 500
+
+    fun validateDuration(duration: String): Result<Unit> =
+        if (duration.isBlank()) {
+            Result.failure(ServiceRequestValidationError.EmptyDuration)
+        } else {
+            Result.success(Unit)
+        }
+
+    fun validateNote(note: String?): Result<Unit> {
+        if (note != null && note.length > MAX_NOTE_LENGTH) {
+            return Result.failure(ServiceRequestValidationError.NoteTooLong)
+        }
+        return Result.success(Unit)
+    }
+
+    fun validateAnonymousContact(customerName: String?, customerPhone: String?): Result<Unit> {
+        val nameOk = !customerName.isNullOrBlank()
+        val phoneOk = !customerPhone.isNullOrBlank() && customerPhone.any { it.isDigit() }
+        return if (nameOk && phoneOk) Result.success(Unit)
+        else Result.failure(ServiceRequestValidationError.MissingContact)
+    }
 
     fun validateServiceTitle(title: String): Result<Unit> =
         if (title.isBlank()) {
@@ -66,13 +99,17 @@ object ServiceRequestValidator {
         date: LocalDate,
         startTime: LocalTime,
         endTime: LocalTime,
+        duration: String,
         budgetAmount: Double?,
+        note: String? = null,
         today: LocalDate = LocalDate.now()
     ): Result<Unit> {
         validateServiceTitle(serviceTitle).onFailure { return Result.failure(it) }
         validateDate(date, today).onFailure { return Result.failure(it) }
         validateTimeRange(startTime, endTime).onFailure { return Result.failure(it) }
+        validateDuration(duration).onFailure { return Result.failure(it) }
         validateBudget(budgetAmount).onFailure { return Result.failure(it) }
+        validateNote(note).onFailure { return Result.failure(it) }
         return Result.success(Unit)
     }
 

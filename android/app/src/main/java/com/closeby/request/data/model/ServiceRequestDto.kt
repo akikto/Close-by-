@@ -21,6 +21,9 @@ data class ServiceRequestDto(
     @SerialName("budget_unit") val budgetUnit: String? = null,
     val note: String? = null,
     val status: String = "PENDING",
+    @SerialName("client_session_id") val clientSessionId: String? = null,
+    @SerialName("provider_name") val providerName: String? = null,
+    @SerialName("provider_phone") val providerPhone: String? = null,
     @SerialName("created_at") val createdAt: String,
     @SerialName("updated_at") val updatedAt: String
 )
@@ -41,7 +44,10 @@ data class ServiceRequestInsertDto(
     @SerialName("budget_currency") val budgetCurrency: String = "INR",
     @SerialName("budget_unit") val budgetUnit: String? = null,
     val note: String? = null,
-    val status: String = "PENDING"
+    val status: String = "PENDING",
+    @SerialName("client_session_id") val clientSessionId: String? = null,
+    @SerialName("provider_name") val providerName: String? = null,
+    @SerialName("provider_phone") val providerPhone: String? = null
 )
 
 @Serializable

@@ -17,15 +17,24 @@ interface ServiceRequestRepository {
 
     suspend fun createRequest(request: ServiceRequest): Result<ServiceRequest>
 
-    suspend fun getCustomerRequests(customerId: String?): Result<List<ServiceRequest>>
+    suspend fun getCustomerRequests(
+        customerId: String?,
+        clientSessionId: String?
+    ): Result<List<ServiceRequest>>
 
     suspend fun getProviderRequests(providerId: String): Result<List<ServiceRequest>>
+
+    suspend fun getRequestById(requestId: String): Result<ServiceRequest>
 
     suspend fun acceptRequest(requestId: String, providerId: String): Result<ServiceRequest>
 
     suspend fun rejectRequest(requestId: String, providerId: String): Result<ServiceRequest>
 
-    suspend fun completeRequest(requestId: String): Result<ServiceRequest>
+    suspend fun completeRequest(requestId: String, providerId: String): Result<ServiceRequest>
 
-    suspend fun cancelRequest(requestId: String): Result<ServiceRequest>
+    suspend fun cancelRequest(
+        requestId: String,
+        customerId: String?,
+        clientSessionId: String?
+    ): Result<ServiceRequest>
 }

@@ -2,10 +2,14 @@ package com.closeby.request.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.closeby.app.core.session.ClientSessionStorage
+import com.closeby.availability.domain.repository.AvailabilityRepository
+import com.closeby.feature.servicelisting.domain.repository.ServiceRepository
 import com.closeby.request.domain.model.BudgetUnit
 import com.closeby.request.domain.model.ServiceRequest
 import com.closeby.request.domain.model.ServiceRequestStatus
 import com.closeby.request.domain.repository.ServiceRequestRepository
+import com.closeby.request.domain.validation.RequestAvailabilityChecker
 import com.closeby.request.domain.validation.ServiceRequestValidator
 import com.closeby.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,16 +20,50 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
 
+sealed class CreateRequestFormState {
+    data object Idle : CreateRequestFormState()
+    data object Submitting : CreateRequestFormState()
+    data class Submitted(val request: ServiceRequest) : CreateRequestFormState()
+    data class ValidationError(val message: String) : CreateRequestFormState()
+    data class Error(val message: String) : CreateRequestFormState()
+}
+
 class CreateServiceRequestViewModel(
     private val serviceId: String,
     private val providerId: String,
     private val serviceTitle: String,
+    private val providerName: String,
+    private val providerPhone: String,
     private val customerId: String?,
-    private val repository: ServiceRequestRepository
+    private val repository: ServiceRequestRepository,
+    private val serviceRepository: ServiceRepository,
+    private val availabilityRepository: AvailabilityRepository,
+    private val clientSessionStorage: ClientSessionStorage
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UiState<ServiceRequest>>(UiState.Idle)
-    val uiState: StateFlow<UiState<ServiceRequest>> = _uiState.asStateFlow()
+    private val _formState = MutableStateFlow<CreateRequestFormState>(CreateRequestFormState.Idle)
+    val formState: StateFlow<CreateRequestFormState> = _formState.asStateFlow()
+
+    private val _serviceLoadState = MutableStateFlow<UiState<Unit>>(UiState.Loading)
+    val serviceLoadState: StateFlow<UiState<Unit>> = _serviceLoadState.asStateFlow()
+
+    private var isSubmitting = false
+
+    init {
+        verifyServiceActive()
+    }
+
+    private fun verifyServiceActive() {
+        viewModelScope.launch {
+            serviceRepository.getServiceById(serviceId)
+                .onSuccess { _serviceLoadState.value = UiState.Success(Unit) }
+                .onFailure { error ->
+                    _serviceLoadState.value = UiState.Error(
+                        error.message ?: "This service is not available."
+                    )
+                }
+        }
+    }
 
     fun sendRequest(
         date: LocalDate,
@@ -34,51 +72,108 @@ class CreateServiceRequestViewModel(
         duration: String,
         budgetAmount: Double?,
         budgetUnit: BudgetUnit?,
-        note: String?
+        note: String?,
+        customerName: String?,
+        customerPhone: String?
     ) {
+        if (isSubmitting) return
+
         val validation = ServiceRequestValidator.validateNewRequest(
             serviceTitle = serviceTitle,
             date = date,
             startTime = startTime,
             endTime = endTime,
-            budgetAmount = budgetAmount
+            duration = duration,
+            budgetAmount = budgetAmount,
+            note = note
         )
-
         validation.onFailure { error ->
-            _uiState.value = UiState.Error(error.message ?: "Invalid request.")
+            _formState.value = CreateRequestFormState.ValidationError(
+                error.message ?: "Invalid request."
+            )
             return
         }
 
-        val now = System.currentTimeMillis()
-        val request = ServiceRequest(
-            id = UUID.randomUUID().toString(),
-            serviceId = serviceId,
-            providerId = providerId,
-            customerId = customerId,
-            serviceTitle = serviceTitle,
-            requestedDate = date,
-            startTime = startTime,
-            endTime = endTime,
-            duration = duration,
-            budgetAmount = budgetAmount,
-            budgetUnit = budgetUnit,
-            note = note,
-            status = ServiceRequestStatus.PENDING,
-            createdAt = now,
-            updatedAt = now
-        )
-
-        _uiState.value = UiState.Loading
-        viewModelScope.launch {
-            repository.createRequest(request)
-                .onSuccess { created -> _uiState.value = UiState.Success(created) }
+        if (customerId == null) {
+            ServiceRequestValidator.validateAnonymousContact(customerName, customerPhone)
                 .onFailure { error ->
-                    _uiState.value = UiState.Error(error.message ?: "Failed to send request.")
+                    _formState.value = CreateRequestFormState.ValidationError(
+                        error.message ?: "Contact details required."
+                    )
+                    return
+                }
+        }
+
+        isSubmitting = true
+        _formState.value = CreateRequestFormState.Submitting
+
+        viewModelScope.launch {
+            val sessionId = clientSessionStorage.getOrCreateSessionId()
+
+            serviceRepository.getServiceById(serviceId)
+                .onFailure {
+                    isSubmitting = false
+                    _formState.value = CreateRequestFormState.Error(
+                        it.message ?: "Service is not available."
+                    )
+                    return@launch
+                }
+
+            RequestAvailabilityChecker.validateProviderAvailable(
+                availabilityRepository,
+                providerId,
+                date,
+                startTime,
+                endTime
+            ).onFailure { error ->
+                isSubmitting = false
+                _formState.value = CreateRequestFormState.ValidationError(
+                    error.message ?: "Provider unavailable."
+                )
+                return@launch
+            }
+
+            val now = System.currentTimeMillis()
+            val request = ServiceRequest(
+                id = UUID.randomUUID().toString(),
+                serviceId = serviceId,
+                providerId = providerId,
+                customerId = customerId,
+                customerName = customerName?.trim(),
+                customerPhone = customerPhone?.trim(),
+                serviceTitle = serviceTitle,
+                requestedDate = date,
+                startTime = startTime,
+                endTime = endTime,
+                duration = duration.trim(),
+                budgetAmount = budgetAmount,
+                budgetUnit = budgetUnit,
+                note = note?.trim(),
+                clientSessionId = sessionId,
+                providerName = providerName,
+                providerPhone = providerPhone,
+                status = ServiceRequestStatus.PENDING,
+                createdAt = now,
+                updatedAt = now
+            )
+
+            repository.createRequest(request)
+                .onSuccess { created ->
+                    clientSessionStorage.rememberRequestId(created.id)
+                    isSubmitting = false
+                    _formState.value = CreateRequestFormState.Submitted(created)
+                }
+                .onFailure { error ->
+                    isSubmitting = false
+                    _formState.value = CreateRequestFormState.Error(
+                        error.message ?: "Failed to send request."
+                    )
                 }
         }
     }
 
-    fun resetState() {
-        _uiState.value = UiState.Idle
+    fun resetForm() {
+        isSubmitting = false
+        _formState.value = CreateRequestFormState.Idle
     }
 }
