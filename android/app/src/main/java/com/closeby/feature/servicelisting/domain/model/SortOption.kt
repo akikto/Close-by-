@@ -8,9 +8,11 @@ package com.closeby.feature.servicelisting.domain.model
  * itself, it only sorts using values it already received.
  */
 enum class SortOption(val label: String) {
-    NEAREST_FIRST("Nearest First"),
-    HIGHEST_RATED("Highest Rated"),
-    LOWEST_PRICE("Lowest Price Information");
+    NEAREST_FIRST("Nearest"),
+    HIGHEST_RATED("Rating"),
+    LOWEST_PRICE("Price: Low → High"),
+    HIGHEST_PRICE("Price: High → Low"),
+    NEWEST("Newest");
 
     companion object {
         val DEFAULT = NEAREST_FIRST

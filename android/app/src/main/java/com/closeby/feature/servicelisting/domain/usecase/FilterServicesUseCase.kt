@@ -32,6 +32,13 @@ class FilterServicesUseCase {
             }
         }
 
+        filter.customRadiusKm?.let { customKm ->
+            result = result.filter { listing ->
+                val distance = listing.distanceInfo?.distanceKm
+                distance != null && distance <= customKm
+            }
+        }
+
         when (filter.availability) {
             AvailabilityFilter.AVAILABLE_NOW ->
                 result = result.filter { it.availability == AvailabilityStatus.AVAILABLE_NOW }

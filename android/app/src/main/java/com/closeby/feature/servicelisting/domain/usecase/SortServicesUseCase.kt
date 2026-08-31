@@ -21,6 +21,8 @@ class SortServicesUseCase(
             SortOption.NEAREST_FIRST -> locationProvider.sortNearestFirst(listings)
             SortOption.HIGHEST_RATED -> listings.sortedByDescending { it.rating }
             SortOption.LOWEST_PRICE -> listings.sortedBy { it.price.amount }
+            SortOption.HIGHEST_PRICE -> listings.sortedByDescending { it.price.amount }
+            SortOption.NEWEST -> listings.sortedByDescending { it.id }
         }
     }
 }

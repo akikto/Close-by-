@@ -48,6 +48,19 @@ class SortingContractTest {
     }
 
     @Test
+    fun `highest price sort orders descending by price amount`() = runTest {
+        val result = useCase(listings, SortOption.HIGHEST_PRICE)
+        val prices = result.map { it.price.amount }
+        assertEquals(prices.sortedDescending(), prices)
+    }
+
+    @Test
+    fun `newest sort preserves all listings`() = runTest {
+        val result = useCase(listings, SortOption.NEWEST)
+        assertEquals(listings.size, result.size)
+    }
+
+    @Test
     fun `sorting does not drop or duplicate listings`() = runTest {
         val result = useCase(listings, SortOption.NEAREST_FIRST)
         assertEquals(listings.size, result.size)

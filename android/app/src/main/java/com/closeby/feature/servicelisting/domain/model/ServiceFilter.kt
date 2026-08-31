@@ -9,13 +9,18 @@ data class ServiceFilter(
     val category: ServiceCategory? = null,
     val subcategory: ServiceSubcategory? = null,
     val radiusKm: RadiusOption? = null,
+    val customRadiusKm: Double? = null,
     val availability: AvailabilityFilter = AvailabilityFilter.ANY,
     val minRating: Double? = null,
     val maxPrice: Double? = null
 ) {
+    val effectiveRadiusKm: Double?
+        get() = customRadiusKm ?: radiusKm?.km
+
     val isEmpty: Boolean
         get() = category == null && subcategory == null && radiusKm == null &&
-            availability == AvailabilityFilter.ANY && minRating == null && maxPrice == null
+            customRadiusKm == null && availability == AvailabilityFilter.ANY &&
+            minRating == null && maxPrice == null
 }
 
 enum class RadiusOption(val km: Double, val label: String) {
