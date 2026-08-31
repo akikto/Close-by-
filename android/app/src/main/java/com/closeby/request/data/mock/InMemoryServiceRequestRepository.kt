@@ -3,6 +3,8 @@ package com.closeby.request.data.mock
 import com.closeby.request.domain.model.BudgetUnit
 import com.closeby.request.domain.model.ServiceRequest
 import com.closeby.request.domain.model.ServiceRequestStatus
+import com.closeby.request.domain.notification.RequestNotificationBridge
+import com.closeby.request.domain.notification.RequestNotificationEvent
 import com.closeby.request.domain.repository.ServiceRequestRepository
 import com.closeby.request.domain.validation.ServiceRequestValidator
 import java.time.LocalDate
@@ -19,6 +21,7 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
 
     override suspend fun createRequest(request: ServiceRequest): Result<ServiceRequest> {
         requests.add(request)
+        RequestNotificationBridge.publish(RequestNotificationEvent.NewProviderRequest(request.id))
         return Result.success(request)
     }
 
@@ -81,6 +84,15 @@ class InMemoryServiceRequestRepository : ServiceRequestRepository {
         ServiceRequestValidator.validateStatusTransition(current.status, status).getOrThrow()
         val updated = current.copy(status = status, updatedAt = System.currentTimeMillis())
         requests[index] = updated
+        when (status) {
+            ServiceRequestStatus.ACCEPTED ->
+                RequestNotificationBridge.publish(RequestNotificationEvent.RequestAccepted(requestId))
+            ServiceRequestStatus.REJECTED ->
+                RequestNotificationBridge.publish(RequestNotificationEvent.RequestRejected(requestId))
+            ServiceRequestStatus.COMPLETED ->
+                RequestNotificationBridge.publish(RequestNotificationEvent.RequestCompleted(requestId))
+            else -> Unit
+        }
         updated
     }
 

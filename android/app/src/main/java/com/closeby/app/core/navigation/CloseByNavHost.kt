@@ -27,7 +27,7 @@ import com.closeby.app.feature.advertisement.CreateAdvertisementRoute
 import com.closeby.app.feature.advertisement.MyAdvertisementsRoute
 import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
-import com.closeby.app.feature.notification.NotificationsScreen
+import com.closeby.app.feature.notification.NotificationsRoute
 import com.closeby.app.feature.profile.ProfileScreen
 import com.closeby.app.feature.provider.AddEditServiceRoute
 import com.closeby.app.feature.provider.AvailabilityEditorRoute
@@ -80,7 +80,16 @@ fun CloseByNavHost(
                 }
             )
         }
-        composable(TopLevelDestination.Notifications.route) { NotificationsScreen() }
+        composable(TopLevelDestination.Notifications.route) {
+            NotificationsRoute(
+                onOpenRequestDetails = { requestId ->
+                    navController.navigate(AppRoutes.requestDetails(requestId))
+                },
+                onOpenProviderRequestDetails = { providerId, requestId ->
+                    navController.navigate(AppRoutes.providerRequestDetails(providerId, requestId))
+                }
+            )
+        }
         composable(TopLevelDestination.Profile.route) {
             ProfileScreen(
                 onProviderProfile = { providerId ->
