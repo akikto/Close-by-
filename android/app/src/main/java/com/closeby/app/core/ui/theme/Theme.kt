@@ -6,6 +6,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
+// Small private helpers kept local to the dark palette so Color.kt stays
+// focused on the brand tokens designers actually asked for.
+private val Color0F = androidx.compose.ui.graphics.Color(0xFF0F1615)
+private val Color15 = androidx.compose.ui.graphics.Color(0xFF15201F)
+
 private val LightColors = lightColorScheme(
     primary = TealPrimary,
     onPrimary = TextOnBrand,
@@ -37,11 +42,6 @@ private val DarkColors = darkColorScheme(
     onSurfaceVariant = TextSecondary,
     error = ErrorRed
 )
-
-// Small private helpers kept local to the dark palette so Color.kt stays
-// focused on the brand tokens designers actually asked for.
-private val Color0F = androidx.compose.ui.graphics.Color(0xFF0F1615)
-private val Color15 = androidx.compose.ui.graphics.Color(0xFF15201F)
 
 @Composable
 fun CloseByTheme(

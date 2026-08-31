@@ -88,7 +88,7 @@ class ServiceListingViewModel(
 
     fun onSortChanged(sortOption: SortOption) {
         currentSort = sortOption
-        applyPipeline()
+        applyPipelineSync()
     }
 
     fun clearFilters() {

@@ -71,6 +71,9 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+        )
     }
 
     packaging {
@@ -113,7 +116,8 @@ dependencies {
     // Kotlinx serialization (needed by Supabase client)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    // Supabase (Postgrest for PostgreSQL access; Auth reserved for later Email OTP work)
+    // Supabase (Postgrest for PostgreSQL access; GoTrue reserved for later Email OTP work)
+    implementation("io.github.jan-tennert.supabase:supabase-kt:2.5.4")
     implementation("io.github.jan-tennert.supabase:postgrest-kt:2.5.4")
     implementation("io.github.jan-tennert.supabase:gotrue-kt:2.5.4")
     implementation("io.ktor:ktor-client-android:2.3.12")
