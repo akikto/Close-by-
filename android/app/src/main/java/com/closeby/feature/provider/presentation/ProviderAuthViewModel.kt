@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.closeby.app.domain.auth.AuthRepository
 import com.closeby.feature.provider.domain.repository.ProviderManagementRepository
-import com.closeby.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +14,7 @@ sealed class AuthUiState {
     data object SendingOtp : AuthUiState()
     data object AwaitingOtp : AuthUiState()
     data object Verifying : AuthUiState()
-    data class SignedIn(val providerId: String, val email: String) : AuthUiState()
+    data class SignedIn(val providerId: String, val userId: String, val email: String) : AuthUiState()
     data class Error(val message: String) : AuthUiState()
 }
 
@@ -61,7 +60,11 @@ class ProviderAuthViewModel(
                         _uiState.value = AuthUiState.Error(it.message ?: "Could not link provider account.")
                         return@launch
                     }
-                    _uiState.value = AuthUiState.SignedIn(providerId, session.email)
+                    _uiState.value = AuthUiState.SignedIn(
+                        providerId = providerId,
+                        userId = session.userId,
+                        email = session.email
+                    )
                 }
                 .onFailure { error ->
                     _uiState.value = AuthUiState.Error(error.message ?: "Invalid verification code.")
@@ -86,7 +89,11 @@ class ProviderAuthViewModel(
                 session.email.substringBefore("@")
             ).getOrNull()
         if (providerId != null) {
-            _uiState.value = AuthUiState.SignedIn(providerId, session.email)
+            _uiState.value = AuthUiState.SignedIn(
+                providerId = providerId,
+                userId = session.userId,
+                email = session.email
+            )
         }
     }
 }

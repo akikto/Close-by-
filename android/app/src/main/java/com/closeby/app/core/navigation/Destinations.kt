@@ -41,9 +41,24 @@ object AppRoutes {
     const val PROVIDER_REQUESTS = "provider/requests/{providerId}"
     const val EDIT_AVAILABILITY = "provider/availability/{providerId}"
 
+    const val VERIFICATION = "verification/{providerId}"
+    const val SUBMIT_REVIEW = "review/{requestId}/{role}"
+    const val REPORT = "report/{targetType}/{targetId}"
+
     const val CREATE_REQUEST = "service/{serviceId}/request"
     const val REQUEST_DETAILS = "request/{requestId}"
     const val PROVIDER_REQUEST_DETAILS = "provider/{providerId}/request/{requestId}"
+
+    const val CREATE_ADVERTISEMENT = "advertisement/create/{ownerId}"
+    const val MY_ADVERTISEMENTS = "advertisement/my/{ownerId}"
+
+    const val ADMIN = "admin"
+    const val ADMIN_VERIFICATIONS = "admin/verifications"
+    const val ADMIN_REPORTS = "admin/reports"
+    const val ADMIN_ADS = "admin/ads"
+    const val ADMIN_PROVIDERS = "admin/providers"
+    const val ADMIN_SERVICES = "admin/services"
+    const val ADMIN_USERS = "admin/users"
 
     fun serviceDetails(serviceId: String): String = "service/$serviceId"
     fun createRequest(serviceId: String): String = "service/$serviceId/request"
@@ -57,4 +72,9 @@ object AppRoutes {
         "provider/edit-service/$providerId/$serviceId"
     fun providerRequests(providerId: String): String = "provider/requests/$providerId"
     fun editAvailability(providerId: String): String = "provider/availability/$providerId"
+    fun verification(providerId: String): String = "verification/$providerId"
+    fun submitReview(requestId: String, role: String): String = "review/$requestId/$role"
+    fun report(targetType: String, targetId: String): String = "report/$targetType/$targetId"
+    fun createAdvertisement(ownerId: String): String = "advertisement/create/$ownerId"
+    fun myAdvertisements(ownerId: String): String = "advertisement/my/$ownerId"
 }

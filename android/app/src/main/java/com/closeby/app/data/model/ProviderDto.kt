@@ -12,6 +12,7 @@ data class ProviderDto(
     val latitude: Double,
     val longitude: Double,
     @SerialName("is_verified") val isVerified: Boolean = false,
+    @SerialName("verification_status") val verificationStatus: String? = null,
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("user_id") val userId: String? = null,
     @SerialName("profile_image_url") val profileImageUrl: String? = null,

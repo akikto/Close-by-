@@ -16,6 +16,8 @@ import com.closeby.availability.domain.repository.AvailabilityRepository
 import com.closeby.feature.provider.data.repository.MockProviderManagementRepository
 import com.closeby.feature.provider.data.repository.SupabaseProviderManagementRepository
 import com.closeby.feature.provider.domain.repository.ProviderManagementRepository
+import com.closeby.advertisement.data.storage.AdImageUploader
+import com.closeby.advertisement.domain.repository.AdvertisementRepository
 import com.closeby.request.data.mock.InMemoryServiceRequestRepository
 import com.closeby.request.data.repository.SupabaseServiceRequestRepository
 import com.closeby.request.domain.repository.ServiceRequestRepository
@@ -55,4 +57,10 @@ object ProviderDependenciesFactory {
     fun imageUploader(context: Context): ServiceImageUploader =
         if (hasSupabase) SupabaseServiceImageUploader(context.applicationContext)
         else MockServiceImageUploader()
+
+    fun advertisementRepository(): AdvertisementRepository =
+        AdvertisementDependenciesFactory.advertisementRepository()
+
+    fun adImageUploader(context: Context): AdImageUploader =
+        AdvertisementDependenciesFactory.adImageUploader(context)
 }

@@ -37,6 +37,7 @@ fun RequestDetailsRoute(
     requestId: String,
     providerId: String? = null,
     onBack: () -> Unit,
+    onLeaveReview: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -85,7 +86,8 @@ fun RequestDetailsRoute(
                     onCancel = viewModel::cancel,
                     onAccept = viewModel::accept,
                     onReject = viewModel::reject,
-                    onComplete = viewModel::complete
+                    onComplete = viewModel::complete,
+                    onLeaveReview = { onLeaveReview(requestId) }
                 )
                 is UiState.Error -> {
                     Text(state.message, modifier = Modifier.align(Alignment.Center))

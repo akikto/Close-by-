@@ -11,6 +11,7 @@ import com.closeby.feature.servicelisting.domain.model.ServiceSubcategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProviderProfileMapperTest {
@@ -25,7 +26,8 @@ class ProviderProfileMapperTest {
                 phoneNumber = "+910000000001",
                 latitude = 12.97,
                 longitude = 77.59,
-                isVerified = true,
+                isVerified = false,
+                verificationStatus = "APPROVED",
                 rating = 4.5,
                 reviewCount = 10
             ),
@@ -47,6 +49,7 @@ class ProviderProfileMapperTest {
 
         assertNotNull(profile)
         assertEquals("2.4 km away", profile!!.distanceLabel)
+        assertTrue(profile.isVerified)
         assertNull(profile.phoneNumber)
     }
 }

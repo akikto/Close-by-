@@ -20,6 +20,7 @@ fun ServiceDetailsRoute(
     onBack: () -> Unit,
     onViewProviderProfile: (String) -> Unit = {},
     onRequestService: (String) -> Unit = {},
+    onReportService: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -57,6 +58,10 @@ fun ServiceDetailsRoute(
                     providerPhone: String
                 ) {
                     onRequestService(serviceId)
+                }
+
+                override fun onReportService(serviceId: String) {
+                    onReportService(serviceId)
                 }
 
                 override fun onBack() = onBack()

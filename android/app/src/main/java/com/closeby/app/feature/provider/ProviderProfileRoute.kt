@@ -41,6 +41,8 @@ fun ProviderProfileRoute(
     onEditAvailability: () -> Unit,
     onServiceClick: (String) -> Unit,
     onProviderRequests: () -> Unit,
+    onVerification: () -> Unit = {},
+    onReportProvider: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -94,7 +96,9 @@ fun ProviderProfileRoute(
                     onMyServices = onMyServices,
                     onEditAvailability = onEditAvailability,
                     onServiceClick = onServiceClick,
-                    onProviderRequests = onProviderRequests
+                    onProviderRequests = onProviderRequests,
+                    onVerification = onVerification,
+                    onReportProvider = onReportProvider
                 )
                 is UiState.Error -> ProviderProfileError(state.message, onRetry = viewModel::load)
             }

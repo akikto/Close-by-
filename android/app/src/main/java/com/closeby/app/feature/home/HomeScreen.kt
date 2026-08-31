@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.closeby.advertisement.ui.LocalOffersSection
 import com.closeby.app.core.ui.components.GradientSurface
 import com.closeby.app.feature.nearby.NearbyServicesHost
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
@@ -69,6 +70,10 @@ fun HomeScreen(
                     )
                 }
             }
+
+            LocalOffersSection(
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Text(
                 text = "Nearby Services",

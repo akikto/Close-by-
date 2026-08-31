@@ -35,6 +35,7 @@ fun RequestDetailsScreen(
     onAccept: () -> Unit,
     onReject: () -> Unit,
     onComplete: () -> Unit,
+    onLeaveReview: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -76,10 +77,15 @@ fun RequestDetailsScreen(
                     ServiceRequestStatus.ACCEPTED -> {
                         Button(onClick = onComplete, modifier = Modifier.fillMaxWidth()) { Text("Complete") }
                     }
+                    ServiceRequestStatus.COMPLETED -> {
+                        Button(onClick = onLeaveReview, modifier = Modifier.fillMaxWidth()) { Text("Leave Review") }
+                    }
                     else -> Unit
                 }
             } else if (request.status == ServiceRequestStatus.PENDING) {
                 OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text("Cancel Request") }
+            } else if (request.status == ServiceRequestStatus.COMPLETED) {
+                Button(onClick = onLeaveReview, modifier = Modifier.fillMaxWidth()) { Text("Leave Review") }
             }
         }
     }
