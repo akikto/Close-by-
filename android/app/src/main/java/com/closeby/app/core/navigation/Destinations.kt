@@ -20,7 +20,7 @@ sealed class TopLevelDestination(
     data object Home : TopLevelDestination("home", "Home", Icons.Filled.Home)
     data object Explore : TopLevelDestination("explore", "Explore", Icons.Filled.Explore)
     data object Requests : TopLevelDestination("requests", "Requests", Icons.Filled.Assignment)
-    data object Notifications : TopLevelDestination("notifications", "Notifications", Icons.Filled.Notifications)
+    data object Notifications : TopLevelDestination("notifications", "Alerts", Icons.Filled.Notifications)
     data object Profile : TopLevelDestination("profile", "Profile", Icons.Filled.Person)
 }
 
