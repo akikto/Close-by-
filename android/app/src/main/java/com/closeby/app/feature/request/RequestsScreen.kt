@@ -1,6 +1,7 @@
 package com.closeby.app.feature.request
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,6 +24,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.core.ui.components.ScreenPageHeader
+import com.closeby.app.core.ui.theme.ScreenAccents
 import com.closeby.contact.data.AndroidContactLauncher
 import com.closeby.request.presentation.CustomerRequestsViewModel
 import com.closeby.request.ui.CustomerRequestsScreen
@@ -62,7 +65,13 @@ fun RequestsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            ScreenPageHeader(
+                title = "My Requests",
+                subtitle = "Track your service bookings",
+                accent = ScreenAccents.Requests
+            )
+            Box(modifier = Modifier.fillMaxSize()) {
             when (val state = uiState) {
                 is UiState.Idle, is UiState.Loading -> CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
@@ -100,6 +109,7 @@ fun RequestsScreen(
                         Text("Retry")
                     }
                 }
+            }
             }
         }
     }

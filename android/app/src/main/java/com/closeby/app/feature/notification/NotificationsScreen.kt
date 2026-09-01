@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,6 +35,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.NotificationDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.core.ui.theme.ScreenAccents
 import com.closeby.notification.domain.model.AppNotification
 import com.closeby.notification.domain.model.NotificationReferenceType
 import com.closeby.notification.domain.model.NotificationType
@@ -138,15 +140,21 @@ fun NotificationsScreen(
     onRetry: () -> Unit = {}
 ) {
     val hasUnread = (uiState as? NotificationsUiState.Loaded)?.notifications?.any { !it.isRead } == true
+    val accent = ScreenAccents.Notifications
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Notifications") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = accent.primary,
+                    titleContentColor = accent.onAccent,
+                    actionIconContentColor = accent.onAccent
+                ),
                 actions = {
                     if (hasUnread) {
                         TextButton(onClick = onMarkAllRead) {
-                            Text("Mark all read")
+                            Text("Mark all read", color = accent.onAccent)
                         }
                     }
                 }
