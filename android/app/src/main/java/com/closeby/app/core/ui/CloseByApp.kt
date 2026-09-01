@@ -8,7 +8,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.zIndex
 import androidx.navigation.compose.rememberNavController
 import com.closeby.app.core.di.NotificationDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
@@ -44,7 +46,13 @@ fun CloseByApp() {
         }
 
         Scaffold(
-            bottomBar = { CloseByBottomBar(navController, notificationsUnreadCount = unreadCount) }
+            bottomBar = {
+                CloseByBottomBar(
+                    navController = navController,
+                    notificationsUnreadCount = unreadCount,
+                    modifier = Modifier.zIndex(1f)
+                )
+            }
         ) { padding ->
             Column(modifier = androidx.compose.ui.Modifier.padding(padding)) {
                 OfflineBanner(status = networkStatus)
