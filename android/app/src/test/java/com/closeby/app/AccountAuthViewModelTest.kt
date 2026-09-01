@@ -66,6 +66,14 @@ class AccountAuthViewModelTest {
     }
 
     @Test
+    fun cancelOtpReturnsToSignedOut() = runTest {
+        viewModel.sendOtp("provider@example.com")
+        advanceUntilIdle()
+        viewModel.cancelOtp()
+        assertTrue(viewModel.authState.value is AuthState.SignedOut)
+    }
+
+    @Test
     fun accountDeletionRequiresSignIn() = runTest {
         viewModel.requestAccountDeletion()
         advanceUntilIdle()

@@ -5,7 +5,9 @@ import com.closeby.app.domain.auth.AuthRepository
 import com.closeby.app.domain.auth.AuthSession
 
 /**
- * Demo auth for builds without Supabase credentials. Accepts any 6-digit OTP.
+ * Demo auth for builds without Supabase credentials.
+ * No email is sent — use [com.closeby.app.domain.auth.AuthEnvironment.DEMO_OTP_CODE]
+ * or any 4+ digit code to verify.
  */
 class MockAuthRepository : AuthRepository {
 

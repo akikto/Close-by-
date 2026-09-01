@@ -1,14 +1,17 @@
 package com.closeby.feature.servicelisting.presentation.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
@@ -26,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.closeby.feature.servicelisting.presentation.components.SavedServiceToggle
 import com.closeby.feature.servicelisting.presentation.components.ServiceListErrorState
 import com.closeby.feature.servicelisting.presentation.components.ServiceListLoadingState
 import com.closeby.feature.servicelisting.presentation.model.ServiceDetailsUiState
@@ -43,7 +47,9 @@ import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceDetailsV
 fun ServiceDetailsScreen(
     viewModel: ServiceDetailsViewModel,
     actions: ServiceDetailsActions,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSaved: Boolean = false,
+    onToggleSave: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -62,6 +68,7 @@ fun ServiceDetailsScreen(
             Column(
                 modifier = modifier
                     .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 AsyncImage(
@@ -78,11 +85,21 @@ fun ServiceDetailsScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(top = 16.dp)
                 )
-                Text(
-                    text = "${listing.category.displayName} / ${listing.subcategory.displayName}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${listing.category.displayName} / ${listing.subcategory.displayName}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (onToggleSave != null) {
+                        SavedServiceToggle(isSaved = isSaved, onToggle = onToggleSave)
+                    }
+                }
 
                 Row(
                     modifier = Modifier.padding(top = 8.dp),
@@ -183,6 +200,8 @@ fun ServiceDetailsScreen(
                         Text("  SMS Provider")
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

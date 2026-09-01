@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByLogo
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.feature.servicelisting.presentation.components.CategorySelector
 import com.closeby.feature.servicelisting.presentation.components.FilterSheet
@@ -51,12 +52,21 @@ fun ServiceListingScreen(
     modifier: Modifier = Modifier,
     showFullFilters: Boolean = true,
     maxListings: Int? = null,
-    showSearchBar: Boolean = true
+    showSearchBar: Boolean = true,
+    savedServiceIds: Set<String> = emptySet(),
+    onToggleSave: ((String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showFilterSheet by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+
+        if (showFullFilters) {
+            CloseByLogo(
+                size = 44.dp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
 
         if (showSearchBar) {
             Row(
@@ -128,7 +138,12 @@ fun ServiceListingScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(listings, key = { it.id }) { listing ->
-                        ServiceCard(listing = listing, onClick = onServiceClick)
+                        ServiceCard(
+                            listing = listing,
+                            onClick = onServiceClick,
+                            isSaved = listing.id in savedServiceIds,
+                            onToggleSave = onToggleSave?.let { toggle -> { toggle(listing.id) } }
+                        )
                     }
                     if (maxListings == null && state.hasMore) {
                         item {

@@ -10,7 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByLogo
 
 /** Shown when a nearby search succeeds but returns zero results within the radius. */
 @Composable
@@ -26,6 +29,8 @@ fun NearbyEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        CloseByLogo(size = 56.dp)
+        Spacer(modifier = Modifier.height(4.dp))
         Text(text = "Nothing nearby yet")
         Text(text = "No services found within $radiusLabel. Try a wider radius.")
         if (onIncreaseRadius != null) {

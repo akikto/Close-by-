@@ -7,6 +7,7 @@ import com.closeby.app.domain.auth.AuthSession
 import com.closeby.app.domain.auth.AuthState
 import com.closeby.app.domain.auth.AuthValidator
 import com.closeby.feature.provider.domain.repository.ProviderManagementRepository
+import com.closeby.notification.domain.handler.NotificationEventPublisher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,8 @@ import kotlinx.coroutines.launch
  */
 class AccountAuthViewModel(
     private val authRepository: AuthRepository,
-    private val providerRepository: ProviderManagementRepository
+    private val providerRepository: ProviderManagementRepository,
+    private val onUserSignedIn: ((String) -> Unit)? = null
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -74,8 +76,10 @@ class AccountAuthViewModel(
 
     fun requestAccountDeletion(reason: String? = null, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
+            val userId = authRepository.getCurrentSession()?.userId
             authRepository.requestAccountDeletion(reason)
                 .onSuccess {
+                    userId?.let { NotificationEventPublisher.accountDeletionRequested(it) }
                     authRepository.signOut()
                     pendingEmail = null
                     _authState.value = AuthState.SignedOut
@@ -85,6 +89,16 @@ class AccountAuthViewModel(
                     _authState.value = AuthState.Error(error.message ?: "Could not request deletion.")
                 }
         }
+    }
+
+    fun resendOtp() {
+        val email = pendingEmail ?: return
+        sendOtp(email)
+    }
+
+    fun cancelOtp() {
+        pendingEmail = null
+        _authState.value = AuthState.SignedOut
     }
 
     fun clearError() {
@@ -107,6 +121,7 @@ class AccountAuthViewModel(
             return
         }
         _authState.value = AuthState.SignedIn(session = session, providerId = providerId)
+        onUserSignedIn?.invoke(session.userId)
     }
 
     private suspend fun restoreSession() {

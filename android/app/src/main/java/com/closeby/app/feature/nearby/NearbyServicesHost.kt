@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.closeby.app.core.di.NearbyDependenciesFactory
+import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.core.di.SavedDependenciesFactory
 import com.closeby.app.core.permissions.rememberLocationPermissionState
 import com.closeby.app.core.ui.components.OfflineBanner
 import com.closeby.feature.nearby.ui.LocationErrorState
@@ -23,7 +25,10 @@ import com.closeby.feature.nearby.ui.LocationPermissionView
 import com.closeby.feature.servicelisting.domain.model.LocationStatus
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.feature.servicelisting.presentation.screens.ServiceListingScreen
+import com.closeby.feature.servicelisting.presentation.viewmodel.SavedServiceToggleViewModel
 import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceListingViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 /**
@@ -45,6 +50,20 @@ fun NearbyServicesHost(
     val uiState by viewModel.uiState.collectAsState()
     val stack = rememberNearbyStack()
     val networkStatus by stack.networkMonitor.status.collectAsState()
+    val context = LocalContext.current
+    val saveToggleViewModel: SavedServiceToggleViewModel = viewModel(
+        factory = remember(context) {
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                    SavedDependenciesFactory.savedServiceToggleViewModelFactory(
+                        context,
+                        ProviderDependenciesFactory.authRepository()
+                    ) as T
+            }
+        }
+    )
+    val savedIds by saveToggleViewModel.savedIds.collectAsState()
     val permissionState = rememberLocationPermissionState { granted ->
         if (granted) viewModel.retryLocation()
     }
@@ -100,7 +119,9 @@ fun NearbyServicesHost(
                         modifier = Modifier.fillMaxSize(),
                         showFullFilters = showFullFilters,
                         maxListings = maxListings,
-                        showSearchBar = showSearchBar
+                        showSearchBar = showSearchBar,
+                        savedServiceIds = savedIds,
+                        onToggleSave = saveToggleViewModel::toggle
                     )
                 }
             }

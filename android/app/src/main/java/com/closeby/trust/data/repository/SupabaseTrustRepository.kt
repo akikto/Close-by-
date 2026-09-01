@@ -2,6 +2,7 @@ package com.closeby.trust.data.repository
 
 import com.closeby.app.data.remote.ProviderRemoteDataSource
 import com.closeby.request.domain.repository.ServiceRequestRepository
+import com.closeby.notification.domain.handler.NotificationEventPublisher
 import com.closeby.trust.data.mapper.TrustMapper
 import com.closeby.trust.data.model.ReportInsertDto
 import com.closeby.trust.data.model.ReviewInsertDto
@@ -51,7 +52,9 @@ class SupabaseTrustRepository(
                 documentUrl = input.documentUrl?.trim()
             )
         )
-        TrustMapper.toDomain(dto)
+        TrustMapper.toDomain(dto)?.also {
+            NotificationEventPublisher.verificationSubmitted(submittedBy, providerId)
+        } ?: throw IllegalStateException("Verification has invalid data.")
     }
 
     override suspend fun getLatestVerificationSubmission(providerId: String) = runCatching {
@@ -116,7 +119,9 @@ class SupabaseTrustRepository(
                 comment = input.comment?.trim()
             )
         )
-        TrustMapper.toDomain(dto) ?: throw IllegalStateException("Review has invalid data.")
+        TrustMapper.toDomain(dto)?.also { review ->
+            NotificationEventPublisher.reviewReceived(revieweeId, requestId, request.providerId)
+        } ?: throw IllegalStateException("Review has invalid data.")
     }
 
     override suspend fun getReviewsForProvider(providerId: String) = runCatching {

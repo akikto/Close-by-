@@ -28,15 +28,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.AdminDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.core.di.SavedDependenciesFactory
+import com.closeby.app.core.ui.components.CloseByBrandHeader
+import com.closeby.app.domain.auth.AuthEnvironment
 import com.closeby.app.domain.auth.AuthState
+import com.closeby.app.feature.saved.MigrationPromptState
+import com.closeby.app.feature.saved.SavedServiceMigrationDialog
+import com.closeby.app.feature.saved.SavedServiceMigrationManager
 import com.closeby.feature.provider.presentation.AccountAuthViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -48,18 +57,27 @@ fun ProfileScreen(
     onMyRequests: () -> Unit = {},
     onSavedServices: () -> Unit = {},
     onRecentlyViewed: () -> Unit = {},
+    onBlockedProviders: () -> Unit = {},
     onSettings: () -> Unit = {},
     onReportProblem: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val authRepository = remember { ProviderDependenciesFactory.authRepository() }
+    val migrationManager = remember {
+        SavedDependenciesFactory.migrationManager(context, authRepository)
+    }
+    val migrationState by migrationManager.state.collectAsState()
+
     val viewModel: AccountAuthViewModel = viewModel(
         factory = remember {
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
                     AccountAuthViewModel(
-                        authRepository = ProviderDependenciesFactory.authRepository(),
-                        providerRepository = ProviderDependenciesFactory.providerManagementRepository()
+                        authRepository = authRepository,
+                        providerRepository = ProviderDependenciesFactory.providerManagementRepository(),
+                        onUserSignedIn = migrationManager::onSignedIn
                     ) as T
             }
         }
@@ -69,6 +87,27 @@ fun ProfileScreen(
     var email by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    SavedServiceMigrationDialog(
+        state = migrationState,
+        onConfirm = {
+            val prompt = migrationState as? MigrationPromptState.Prompt ?: return@SavedServiceMigrationDialog
+            viewModel.viewModelScope.launch {
+                migrationManager.migrate(
+                    prompt.userId,
+                    SavedDependenciesFactory.localSavedRepository(context).currentIds()
+                )
+            }
+        },
+        onDismiss = migrationManager::dismiss,
+        onRetry = {
+            val error = migrationState as? MigrationPromptState.Error ?: return@SavedServiceMigrationDialog
+            viewModel.viewModelScope.launch {
+                migrationManager.retry(error.userId, error.localIds)
+            }
+        },
+        onSuccessDismiss = migrationManager::clearSuccess
+    )
 
     LaunchedEffect(authState) {
         val signedIn = authState as? AuthState.SignedIn
@@ -113,13 +152,25 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Account", style = MaterialTheme.typography.headlineSmall)
+            CloseByBrandHeader(
+                logoSize = 80.dp,
+                subtitle = "Account"
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Browse services without signing in. Sign in with Email OTP to manage your account.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (!AuthEnvironment.usesSupabase) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Demo build: OTP emails are not sent. After entering your email, use code " +
+                        "${AuthEnvironment.DEMO_OTP_CODE} to sign in.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
 
             when (val state = authState) {
@@ -137,6 +188,7 @@ fun ProfileScreen(
                     AccountButton("My Requests") { onMyRequests() }
                     AccountButton("Saved Services") { onSavedServices() }
                     AccountOutlinedButton("Recently Viewed") { onRecentlyViewed() }
+                    AccountOutlinedButton("Blocked Providers") { onBlockedProviders() }
                     AccountOutlinedButton("My Advertisements") { onMyAdvertisements(session.userId) }
                     AccountOutlinedButton("Create Advertisement") { onCreateAdvertisement(session.userId) }
 
@@ -145,7 +197,7 @@ fun ProfileScreen(
                     }
 
                     AccountOutlinedButton("Settings") { onSettings() }
-                    AccountOutlinedButton("Help") { /* placeholder */ }
+                    AccountOutlinedButton("Help") { onReportProblem() }
                     AccountOutlinedButton("Report a Problem") { onReportProblem() }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(
@@ -167,11 +219,33 @@ fun ProfileScreen(
                     CircularProgressIndicator()
                 }
                 is AuthState.OtpRequested -> {
+                    Text(
+                        text = "Enter the code sent to ${state.email}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!AuthEnvironment.usesSupabase) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No email was sent in this demo build. Use ${AuthEnvironment.DEMO_OTP_CODE}.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Check your inbox and spam folder. Delivery can take up to a minute.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = otp,
                         onValueChange = { otp = it },
                         label = { Text("Verification code") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
@@ -179,6 +253,18 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) { Text("Verify & sign in") }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = { viewModel.resendOtp() },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp)
+                    ) { Text("Resend code") }
+                    TextButton(
+                        onClick = {
+                            otp = ""
+                            viewModel.cancelOtp()
+                        }
+                    ) { Text("Use a different email") }
                 }
                 AuthState.SignedOut -> {
                     OutlinedTextField(

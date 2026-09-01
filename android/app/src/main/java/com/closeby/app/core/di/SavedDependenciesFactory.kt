@@ -10,6 +10,8 @@ import com.closeby.feature.servicelisting.data.local.SavedServiceSyncQueue
 import com.closeby.feature.servicelisting.data.repository.OfflineAwareSavedServiceRepository
 import com.closeby.feature.servicelisting.domain.repository.RecentlyViewedRepository
 import com.closeby.feature.servicelisting.domain.repository.SavedServiceRepository
+import com.closeby.app.feature.saved.SavedServiceMigrationManager
+import com.closeby.feature.servicelisting.presentation.viewmodel.SavedServiceToggleViewModel
 
 object SavedDependenciesFactory {
 
@@ -19,6 +21,21 @@ object SavedDependenciesFactory {
     private var localSaved: LocalSavedServiceRepository? = null
     private var localHistory: LocalRecentlyViewedRepository? = null
     private var offlineSaved: OfflineAwareSavedServiceRepository? = null
+    private var migrationManager: SavedServiceMigrationManager? = null
+
+    fun savedServiceToggleViewModelFactory(
+        context: Context,
+        authRepository: AuthRepository
+    ): SavedServiceToggleViewModel =
+        SavedServiceToggleViewModel(savedServiceRepository(context, authRepository))
+
+    fun migrationManager(context: Context, authRepository: AuthRepository): SavedServiceMigrationManager {
+        migrationManager?.let { return it }
+        return SavedServiceMigrationManager(
+            localRepository = localSavedRepository(context),
+            savedRepository = savedServiceRepository(context, authRepository)
+        ).also { migrationManager = it }
+    }
 
     fun savedServiceRepository(context: Context, authRepository: AuthRepository): SavedServiceRepository {
         val local = localSaved ?: LocalSavedServiceRepository(context).also { localSaved = it }

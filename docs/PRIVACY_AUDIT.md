@@ -41,6 +41,12 @@
 
 Phase 9 `account_deletion_requests` — user-initiated; processed by admin. No immediate hard delete from client.
 
+## Batch 5 updates
+
+- Local saved-service cache remains on-device only until user consents to migration.
+- Blocked provider list managed via dedicated screen; discovery filters blocked IDs server-side and client-side.
+- Account deletion triggers in-app notification event before sign-out.
+
 ## Recommendations
 
 - Clear local caches on explicit sign-out if product requires (optional enhancement).
