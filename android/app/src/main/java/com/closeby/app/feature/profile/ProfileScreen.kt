@@ -37,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.AdminDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.app.core.di.SavedDependenciesFactory
+import com.closeby.app.core.ui.components.CloseByBrandHeader
 import com.closeby.app.domain.auth.AuthEnvironment
 import com.closeby.app.domain.auth.AuthState
 import com.closeby.app.feature.saved.MigrationPromptState
@@ -151,7 +152,10 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Account", style = MaterialTheme.typography.headlineSmall)
+            CloseByBrandHeader(
+                logoSize = 80.dp,
+                subtitle = "Account"
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Browse services without signing in. Sign in with Email OTP to manage your account.",

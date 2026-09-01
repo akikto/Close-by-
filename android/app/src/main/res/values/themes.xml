@@ -1,6 +1,6 @@
 <resources>
     <style name="Theme.CloseBy" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/white</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">@drawable/splash_background</item>
     </style>
 </resources>

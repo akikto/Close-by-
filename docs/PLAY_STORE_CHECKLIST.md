@@ -12,7 +12,7 @@
 
 - [ ] **Short description** (80 chars max): Local service discovery — find nearby providers and contact directly.
 - [ ] **Full description**: Explain vehicles, labour, equipment discovery; no in-app payments; native call/SMS.
-- [ ] **App icon**: `mipmap` launcher icons present — verify adaptive icon on device.
+- [x] **App icon**: Official `ic_closeby_logo` used for launcher (adaptive icon) and in-app branding via `CloseByLogo`.
 - [ ] **Feature graphic**: 1024×500 — **placeholder required** (design asset not in repo).
 - [ ] **Screenshots**: Phone + optional tablet — **capture from release candidate build**.
 - [ ] **Privacy policy URL**: **PLACEHOLDER** — host policy before production release.

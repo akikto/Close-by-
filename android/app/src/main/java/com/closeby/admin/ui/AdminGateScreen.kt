@@ -21,7 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByBrandHeader
+import com.closeby.app.core.ui.components.CloseByLogo
 import com.closeby.admin.domain.model.AdminDashboardStats
 import com.closeby.util.UiState
 
@@ -43,7 +47,11 @@ fun AdminGateScreen(
     when (gateState) {
         com.closeby.admin.presentation.AdminGateUiState.Checking -> {
             Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CloseByBrandHeader(logoSize = 72.dp, subtitle = "Loading admin tools...")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator()
+                }
             }
         }
         is com.closeby.admin.presentation.AdminGateUiState.Denied -> {
@@ -54,6 +62,8 @@ fun AdminGateScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                CloseByBrandHeader(logoSize = 72.dp)
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = gateState.message,
                     style = MaterialTheme.typography.titleMedium,
@@ -92,8 +102,10 @@ fun AdminDashboardScreen(
             "Platform overview and moderation tools",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
         )
+        CloseByLogo(size = 48.dp)
+        Spacer(modifier = Modifier.height(8.dp))
 
         when (uiState) {
             is UiState.Idle, is UiState.Loading -> {

@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByLogo
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.feature.servicelisting.presentation.components.CategorySelector
 import com.closeby.feature.servicelisting.presentation.components.FilterSheet
@@ -59,6 +60,13 @@ fun ServiceListingScreen(
     var showFilterSheet by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+
+        if (showFullFilters) {
+            CloseByLogo(
+                size = 44.dp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
 
         if (showSearchBar) {
             Row(
