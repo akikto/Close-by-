@@ -1,7 +1,9 @@
 package com.closeby.app.feature.profile
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -9,22 +11,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByBrandHeader
 
-/**
- * Placeholder Profile screen. Customer/provider profile & auth entry points attach here.
- */
 @Composable
 fun ProfileScreen() {
     Scaffold { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.Center
+                .padding(innerPadding)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            CloseByBrandHeader(logoSize = 88.dp, subtitle = "Account")
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Profile — coming soon",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

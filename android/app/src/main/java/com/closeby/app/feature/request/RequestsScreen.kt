@@ -1,7 +1,10 @@
 package com.closeby.app.feature.request
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.closeby.app.core.ui.components.CloseByLogo
 import com.closeby.request.data.mock.InMemoryServiceRequestRepository
 import com.closeby.request.presentation.CustomerRequestsViewModel
 import com.closeby.request.ui.CustomerRequestsScreen
@@ -53,9 +57,14 @@ fun RequestsScreen() {
     Scaffold { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             when (val state = uiState) {
-                is UiState.Idle, is UiState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                is UiState.Idle, is UiState.Loading -> Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CloseByLogo(size = 56.dp)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CircularProgressIndicator()
+                }
                 is UiState.Success -> CustomerRequestsScreen(grouped = state.data)
                 is UiState.Error -> Text(
                     text = state.message,

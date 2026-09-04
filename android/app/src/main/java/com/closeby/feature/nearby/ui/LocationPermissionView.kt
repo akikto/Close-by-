@@ -10,7 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByBrandHeader
 
 /**
  * Shown when location permission has not been granted. Two flavors depending on
@@ -31,6 +34,8 @@ fun LocationPermissionView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        CloseByBrandHeader(logoSize = 80.dp)
+        Spacer(modifier = Modifier.height(4.dp))
         Text(text = "Location access needed")
         Text(
             text = if (permanentlyDenied) {

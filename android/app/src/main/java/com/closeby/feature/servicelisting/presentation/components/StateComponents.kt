@@ -15,7 +15,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.unit.dp
+import com.closeby.app.core.ui.components.CloseByLogo
 import com.closeby.feature.servicelisting.presentation.model.EmptyReason
 
 @Composable
@@ -27,6 +30,8 @@ fun ServiceListLoadingState(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        CloseByLogo(size = 56.dp)
+        Spacer(modifier = Modifier.height(12.dp))
         CircularProgressIndicator()
         Text(
             text = "Finding services near you...",
@@ -52,6 +57,8 @@ fun ServiceListEmptyState(reason: EmptyReason, onClearFilters: (() -> Unit)? = n
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        CloseByLogo(size = 52.dp)
+        Spacer(modifier = Modifier.height(12.dp))
         Text(text = title, style = MaterialTheme.typography.titleMedium)
         Text(
             text = subtitle,
@@ -85,6 +92,8 @@ fun ServiceListErrorState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        CloseByLogo(size = 52.dp)
+        Spacer(modifier = Modifier.height(12.dp))
         Text(text = "Something went wrong", style = MaterialTheme.typography.titleMedium)
         Text(
             text = message,
