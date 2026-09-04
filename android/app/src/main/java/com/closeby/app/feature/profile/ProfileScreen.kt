@@ -38,7 +38,9 @@ import com.closeby.app.core.di.AdminDependenciesFactory
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.app.core.di.SavedDependenciesFactory
 import com.closeby.app.core.ui.components.CloseByBrandHeader
+import com.closeby.app.core.ui.components.ScreenPageHeader
 import com.closeby.app.domain.auth.AuthEnvironment
+import com.closeby.app.core.ui.theme.ScreenAccents
 import com.closeby.app.domain.auth.AuthState
 import com.closeby.app.feature.saved.MigrationPromptState
 import com.closeby.app.feature.saved.SavedServiceMigrationDialog
@@ -147,15 +149,21 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CloseByBrandHeader(
-                logoSize = 80.dp,
-                subtitle = "Account"
+            ScreenPageHeader(
+                title = "Profile",
+                subtitle = "Manage your account",
+                accent = ScreenAccents.Profile
             )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+            CloseByBrandHeader(logoSize = 72.dp)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Browse services without signing in. Sign in with Email OTP to manage your account.",
@@ -291,6 +299,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = viewModel::clearError) { Text("Try again") }
                 }
+            }
             }
         }
     }

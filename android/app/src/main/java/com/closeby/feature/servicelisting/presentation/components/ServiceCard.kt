@@ -3,9 +3,12 @@ package com.closeby.feature.servicelisting.presentation.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,23 +23,23 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.closeby.app.core.ui.theme.ScreenAccents
+import com.closeby.app.core.ui.theme.SuccessGreen
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 
-/**
- * Compact, mobile-friendly card summarizing a single service listing.
- * Distance text comes from `listing.distanceInfo`, supplied by the
- * Location module — this composable does not calculate it.
- */
 @Composable
 fun ServiceCard(
     listing: ServiceListing,
@@ -45,6 +48,9 @@ fun ServiceCard(
     isSaved: Boolean = false,
     onToggleSave: (() -> Unit)? = null
 ) {
+    val accent = ScreenAccents.forCategory(listing.category)
+    val accentSurface = ScreenAccents.categorySurface(listing.category)
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -52,121 +58,173 @@ fun ServiceCard(
             .semantics {
                 contentDescription = "${listing.title}, ${listing.price.formatted()}, ${listing.availability.label}"
             },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .height(IntrinsicSize.Min)
         ) {
-            AsyncImage(
-                model = listing.imageUrls.firstOrNull(),
-                contentDescription = "Photo of ${listing.title}",
+            Box(
                 modifier = Modifier
-                    .size(88.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                    .width(5.dp)
+                    .fillMaxHeight()
+                    .background(accent)
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
+            Row(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
+                    .padding(12.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                AsyncImage(
+                    model = listing.imageUrls.firstOrNull(),
+                    contentDescription = "Photo of ${listing.title}",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(accentSurface, RoundedCornerShape(14.dp))
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = listing.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = "${listing.category.displayName} / ${listing.subcategory.displayName}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    if (onToggleSave != null) {
-                        SavedServiceToggle(isSaved = isSaved, onToggle = onToggleSave)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (listing.isVerifiedProvider) {
-                        Icon(
-                            imageVector = Icons.Filled.CheckCircle,
-                            contentDescription = "Verified provider",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "${listing.rating} (${listing.reviewCount})",
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                listing.distanceInfo?.formatted()?.let { distanceText ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = listing.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            CategoryChip(
+                                label = "${listing.category.emoji} ${listing.category.displayName}",
+                                accent = accent,
+                                surface = accentSurface
+                            )
+                        }
+                        if (onToggleSave != null) {
+                            SavedServiceToggle(isSaved = isSaved, onToggle = onToggleSave)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (listing.isVerifiedProvider) {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = "Verified provider",
+                                tint = SuccessGreen,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
                         Icon(
-                            imageVector = Icons.Filled.LocationOn,
+                            imageVector = Icons.Filled.Star,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = Color(0xFFF59E0B),
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = distanceText,
+                            text = "${listing.rating} (${listing.reviewCount})",
                             style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
+
+                    listing.distanceInfo?.formatted()?.let { distanceText ->
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.LocationOn,
+                                contentDescription = null,
+                                tint = accent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = distanceText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = listing.price.formatted(),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = accent,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        AvailabilityChip(label = listing.availability.label)
+                    }
                 }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = listing.price.formatted(),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = listing.availability.label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary,
-                    maxLines = 1,
-                    softWrap = false,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
+    }
+}
+
+@Composable
+private fun CategoryChip(label: String, accent: Color, surface: Color) {
+    Surface(
+        color = surface,
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = accent,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+        )
+    }
+}
+
+@Composable
+private fun AvailabilityChip(label: String) {
+    Surface(
+        color = SuccessGreen.copy(alpha = 0.12f),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = SuccessGreen,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+        )
     }
 }

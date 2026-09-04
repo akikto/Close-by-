@@ -24,7 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.closeby.app.core.ui.components.CloseByLogo
+import com.closeby.app.core.ui.components.ScreenPageHeader
+import com.closeby.app.core.ui.theme.ScreenAccents
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
 import com.closeby.feature.servicelisting.presentation.components.CategorySelector
 import com.closeby.feature.servicelisting.presentation.components.FilterSheet
@@ -59,29 +60,38 @@ fun ServiceListingScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showFilterSheet by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    val exploreAccent = ScreenAccents.Explore
 
+    Column(modifier = modifier.fillMaxSize()) {
         if (showFullFilters) {
-            CloseByLogo(
-                size = 44.dp,
-                modifier = Modifier.padding(bottom = 8.dp)
+            ScreenPageHeader(
+                title = "Explore",
+                subtitle = "Find vehicles, labour and equipment near you",
+                accent = exploreAccent
             )
         }
 
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+
         if (showSearchBar) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
                 ServiceSearchBar(
                     query = (uiState as? ServiceListUiState.Success)?.query
                         ?: (uiState as? ServiceListUiState.Empty)?.query.orEmpty(),
                     onQueryChange = viewModel::onQueryChanged,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    accentColor = exploreAccent.primary
                 )
                 if (showFullFilters) {
                     IconButton(onClick = { showFilterSheet = true }) {
-                        Icon(Icons.Filled.Tune, contentDescription = "Open filters")
+                        Icon(
+                            Icons.Filled.Tune,
+                            contentDescription = "Open filters",
+                            tint = exploreAccent.primary
+                        )
                     }
                 }
             }
@@ -175,6 +185,7 @@ fun ServiceListingScreen(
                 onRetry = viewModel::retry,
                 modifier = Modifier.fillMaxSize()
             )
+        }
         }
     }
 

@@ -2,6 +2,7 @@ package com.closeby.app.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,9 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.closeby.app.core.ui.theme.GradientEnd
 import com.closeby.app.core.ui.theme.GradientStart
+import com.closeby.app.core.ui.theme.ScreenAccent
 
 /**
  * Base reusable pieces for the "teal/blue, soft gradients, rounded cards,
@@ -47,16 +51,50 @@ fun CloseByCard(
 fun GradientSurface(
     modifier: Modifier = Modifier,
     cornerRadius: Int = 24,
+    gradientStart: Color = GradientStart,
+    gradientEnd: Color = GradientEnd,
     content: @Composable () -> Unit
 ) {
     Box(
         modifier = modifier
             .background(
-                brush = Brush.horizontalGradient(listOf(GradientStart, GradientEnd)),
+                brush = Brush.horizontalGradient(listOf(gradientStart, gradientEnd)),
                 shape = RoundedCornerShape(cornerRadius.dp)
             )
     ) {
         content()
+    }
+}
+
+@Composable
+fun ScreenPageHeader(
+    title: String,
+    accent: ScreenAccent,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
+) {
+    GradientSurface(
+        modifier = modifier.fillMaxWidth(),
+        cornerRadius = 0,
+        gradientStart = accent.gradientStart,
+        gradientEnd = accent.gradientEnd
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = accent.onAccent
+            )
+            subtitle?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = accent.onAccent.copy(alpha = 0.9f),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+        }
     }
 }
 

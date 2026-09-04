@@ -4,16 +4,16 @@
         <shape android:shape="rectangle">
             <gradient
                 android:angle="0"
-                android:endColor="#2F6FED"
-                android:startColor="#0E9394"
+                android:endColor="#34C49F"
+                android:startColor="#75C9F1"
                 android:type="linear" />
         </shape>
     </item>
     <item
-        android:bottom="96dp"
-        android:left="96dp"
-        android:right="96dp"
-        android:top="96dp">
+        android:bottom="72dp"
+        android:left="72dp"
+        android:right="72dp"
+        android:top="72dp">
         <bitmap
             android:gravity="center"
             android:src="@drawable/ic_closeby_logo" />

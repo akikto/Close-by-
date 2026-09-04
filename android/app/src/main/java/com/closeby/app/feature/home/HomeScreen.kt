@@ -10,22 +10,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.closeby.advertisement.ui.LocalOffersSection
 import com.closeby.app.core.ui.components.CloseByLogo
 import com.closeby.app.core.ui.components.GradientSurface
+import com.closeby.app.core.ui.theme.ScreenAccents
 import com.closeby.app.feature.nearby.NearbyServicesHost
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 
 /**
  * Home screen with nearby services preview, category shortcuts, and search entry.
@@ -36,6 +39,7 @@ fun HomeScreen(
     onExploreSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val homeAccent = ScreenAccents.Home
     Scaffold(modifier = modifier) { innerPadding ->
         Column(
             modifier = Modifier
@@ -43,34 +47,48 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            GradientSurface(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(20.dp)) {
+            GradientSurface(
+                modifier = Modifier.fillMaxWidth(),
+                gradientStart = homeAccent.gradientStart,
+                gradientEnd = homeAccent.gradientEnd
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        CloseByLogo(size = 56.dp)
-                        Spacer(modifier = Modifier.width(12.dp))
+                        CloseByLogo(size = 48.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Your Location",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                            color = homeAccent.onAccent.copy(alpha = 0.9f)
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         readOnly = true,
                         enabled = false,
-                        placeholder = { Text("Search nearby services") },
+                        placeholder = {
+                            Text(
+                                "Search services...",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(44.dp)
                             .clickable { onExploreSearch() },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledBorderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-                            disabledPlaceholderColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            disabledTextColor = homeAccent.onAccent,
+                            disabledBorderColor = homeAccent.onAccent.copy(alpha = 0.45f),
+                            disabledPlaceholderColor = homeAccent.onAccent.copy(alpha = 0.75f),
+                            disabledContainerColor = homeAccent.onAccent.copy(alpha = 0.12f)
                         )
                     )
                 }
