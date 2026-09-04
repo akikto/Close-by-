@@ -5,6 +5,7 @@ import com.closeby.admin.domain.model.AdminAction
 import com.closeby.admin.domain.model.AdminAdvertisementSummary
 import com.closeby.admin.domain.model.AdminAuditLog
 import com.closeby.admin.domain.model.AdminDashboardStats
+import com.closeby.admin.domain.model.AdminDeletionRequestSummary
 import com.closeby.admin.domain.model.AdminProviderSummary
 import com.closeby.admin.domain.model.AdminServiceSummary
 import com.closeby.admin.domain.model.AdminUserSummary
@@ -31,6 +32,7 @@ class MockAdminRepository(
     private val reports = ConcurrentHashMap<String, Report>()
     private val advertisements = ConcurrentHashMap<String, AdminAdvertisementSummary>()
     private val auditLogs = mutableListOf<AdminAuditLog>()
+    private val deletionRequests = ConcurrentHashMap<String, AdminDeletionRequestSummary>()
 
     init {
         seedDemoData()
@@ -49,8 +51,28 @@ class MockAdminRepository(
                     it.value.verificationStatus == VerificationStatus.PENDING
                 },
                 pendingAdvertisements = advertisements.count { it.value.status == "PENDING" },
-                openReports = reports.count { it.value.status == ReportStatus.OPEN }
+                openReports = reports.count { it.value.status == ReportStatus.OPEN },
+                pendingDeletionRequests = deletionRequests.count { it.value.status == "PENDING" }
             )
+        }
+
+    override suspend fun listAccountDeletionRequests(): Result<List<AdminDeletionRequestSummary>> =
+        requireAdmin {
+            deletionRequests.values.sortedByDescending { it.requestedAt }
+        }
+
+    override suspend fun approveAccountDeletion(requestId: String, note: String?): Result<Unit> =
+        requireAdmin {
+            val existing = deletionRequests[requestId] ?: throw NoSuchElementException("Request not found.")
+            deletionRequests[requestId] = existing.copy(status = "COMPLETED", processedAt = System.currentTimeMillis())
+            logAudit(AdminAction.APPROVE_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
+        }
+
+    override suspend fun rejectAccountDeletion(requestId: String, note: String?): Result<Unit> =
+        requireAdmin {
+            val existing = deletionRequests[requestId] ?: throw NoSuchElementException("Request not found.")
+            deletionRequests[requestId] = existing.copy(status = "CANCELLED", processedAt = System.currentTimeMillis())
+            logAudit(AdminAction.REJECT_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
         }
 
     override suspend fun listUsers(): Result<List<AdminUserSummary>> =
@@ -292,6 +314,15 @@ class MockAdminRepository(
             startAt = now,
             endAt = now + 86_400_000L,
             createdAt = now
+        )
+        deletionRequests["del-req-001"] = AdminDeletionRequestSummary(
+            id = "del-req-001",
+            userId = "demo-user",
+            displayName = "Demo User",
+            reason = "No longer using the app",
+            status = "PENDING",
+            requestedAt = now,
+            processedAt = null
         )
     }
 }

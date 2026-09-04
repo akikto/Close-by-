@@ -12,6 +12,7 @@ import com.closeby.app.data.location.ServicelistingLocationAdapter
 import com.closeby.feature.nearby.location.AndroidLocationProvider
 import com.closeby.feature.servicelisting.domain.repository.LocationProvider
 import com.closeby.feature.servicelisting.domain.repository.ServiceRepository
+import com.closeby.feature.servicelisting.domain.usecase.FilterServicesUseCase
 import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceDetailsViewModel
 import com.closeby.feature.servicelisting.presentation.viewmodel.ServiceListingViewModel
 

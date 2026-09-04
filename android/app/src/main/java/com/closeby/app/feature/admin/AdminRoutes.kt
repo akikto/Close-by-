@@ -27,12 +27,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.admin.presentation.AdminAdvertisementsViewModel
 import com.closeby.admin.presentation.AdminDashboardViewModel
 import com.closeby.admin.presentation.AdminGateViewModel
+import com.closeby.admin.presentation.AdminDeletionRequestsViewModel
 import com.closeby.admin.presentation.AdminProvidersViewModel
 import com.closeby.admin.presentation.AdminReportsViewModel
 import com.closeby.admin.presentation.AdminServicesViewModel
 import com.closeby.admin.presentation.AdminUsersViewModel
 import com.closeby.admin.presentation.AdminVerificationViewModel
 import com.closeby.admin.ui.AdminAdvertisementsScreen
+import com.closeby.admin.ui.AdminDeletionRequestsScreen
 import com.closeby.admin.ui.AdminGateScreen
 import com.closeby.admin.ui.AdminProvidersScreen
 import com.closeby.admin.ui.AdminReportsScreen
@@ -394,6 +396,45 @@ fun AdminUsersRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
         AdminUsersScreen(
             uiState = uiState,
             onToggleSuspend = viewModel::toggleSuspend,
+            modifier = Modifier.padding(padding)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdminDeletionRequestsRoute(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val repository = remember { AdminDependenciesFactory.adminRepository() }
+    val viewModel: AdminDeletionRequestsViewModel = viewModel(
+        factory = remember {
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                    AdminDeletionRequestsViewModel(repository) as T
+            }
+        }
+    )
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.load() }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text("Account Deletion Requests") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        AdminDeletionRequestsScreen(
+            uiState = uiState,
+            onApprove = viewModel::approve,
+            onReject = viewModel::reject,
             modifier = Modifier.padding(padding)
         )
     }

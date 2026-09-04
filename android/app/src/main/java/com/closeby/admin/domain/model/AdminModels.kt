@@ -8,7 +8,18 @@ data class AdminDashboardStats(
     val activeServices: Int,
     val pendingVerifications: Int,
     val pendingAdvertisements: Int,
-    val openReports: Int
+    val openReports: Int,
+    val pendingDeletionRequests: Int = 0
+)
+
+data class AdminDeletionRequestSummary(
+    val id: String,
+    val userId: String,
+    val displayName: String?,
+    val reason: String?,
+    val status: String,
+    val requestedAt: Long,
+    val processedAt: Long?
 )
 
 data class AdminUserSummary(
@@ -73,7 +84,9 @@ enum class AdminAction {
     APPROVE_AD,
     REJECT_AD,
     PAUSE_AD,
-    RESUME_AD
+    RESUME_AD,
+    APPROVE_ACCOUNT_DELETION,
+    REJECT_ACCOUNT_DELETION
 }
 
 class AdminAccessDeniedException : Exception("Admin access required.")

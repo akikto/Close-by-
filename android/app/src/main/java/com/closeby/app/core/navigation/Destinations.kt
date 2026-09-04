@@ -59,6 +59,7 @@ object AppRoutes {
     const val ADMIN_PROVIDERS = "admin/providers"
     const val ADMIN_SERVICES = "admin/services"
     const val ADMIN_USERS = "admin/users"
+    const val ADMIN_DELETION_REQUESTS = "admin/deletion-requests"
 
     const val SAVED_SERVICES = "saved-services"
     const val RECENTLY_VIEWED = "recently-viewed"

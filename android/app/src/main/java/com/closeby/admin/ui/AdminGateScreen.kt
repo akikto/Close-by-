@@ -129,7 +129,12 @@ fun AdminDashboardScreen(
                     AdminNavItem("Active Services", stats.activeServices.toString(), "admin/services"),
                     AdminNavItem("Pending Verifications", stats.pendingVerifications.toString(), "admin/verifications"),
                     AdminNavItem("Pending Ads", stats.pendingAdvertisements.toString(), "admin/ads"),
-                    AdminNavItem("Open Reports", stats.openReports.toString(), "admin/reports")
+                    AdminNavItem("Open Reports", stats.openReports.toString(), "admin/reports"),
+                    AdminNavItem(
+                        "Deletion Requests",
+                        stats.pendingDeletionRequests.toString(),
+                        "admin/deletion-requests"
+                    )
                 )
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),

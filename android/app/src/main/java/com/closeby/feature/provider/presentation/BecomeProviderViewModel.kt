@@ -73,27 +73,27 @@ class BecomeProviderViewModel(
 
     fun submit() {
         val ready = _uiState.value as? BecomeProviderUiState.Ready ?: return
-        val session = authRepository.getCurrentSession()
-        if (session == null) {
-            _uiState.value = BecomeProviderUiState.Error("Sign in before becoming a provider.")
-            return
-        }
-        if (ready.name.isBlank()) {
-            _uiState.value = BecomeProviderUiState.Error("Enter your business or display name.")
-            return
-        }
-        if (ready.phoneNumber.isBlank()) {
-            _uiState.value = BecomeProviderUiState.Error("Enter a contact phone number.")
-            return
-        }
-        val lat = ready.latitude
-        val lng = ready.longitude
-        if (lat == null || lng == null) {
-            _uiState.value = BecomeProviderUiState.Error("Capture your service location using GPS.")
-            return
-        }
-        _uiState.value = BecomeProviderUiState.Saving
         viewModelScope.launch {
+            val session = authRepository.getCurrentSession()
+            if (session == null) {
+                _uiState.value = BecomeProviderUiState.Error("Sign in before becoming a provider.")
+                return@launch
+            }
+            if (ready.name.isBlank()) {
+                _uiState.value = BecomeProviderUiState.Error("Enter your business or display name.")
+                return@launch
+            }
+            if (ready.phoneNumber.isBlank()) {
+                _uiState.value = BecomeProviderUiState.Error("Enter a contact phone number.")
+                return@launch
+            }
+            val lat = ready.latitude
+            val lng = ready.longitude
+            if (lat == null || lng == null) {
+                _uiState.value = BecomeProviderUiState.Error("Capture your service location using GPS.")
+                return@launch
+            }
+            _uiState.value = BecomeProviderUiState.Saving
             providerRepository.createProviderProfile(
                 userId = session.userId,
                 input = ProviderOnboardingInput(

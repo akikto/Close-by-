@@ -23,13 +23,13 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
-        continue-on-error: true
 
       - name: Set up Gradle wrapper (if missing)
         run: |
           cd android
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.7
+          if [ ! -f gradlew ] || [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            gradle wrapper --gradle-version 8.9
+            chmod +x gradlew
           fi
 
       - name: Configure Supabase credentials
@@ -50,6 +50,10 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
+
+      - name: Build release AAB (debug signing fallback when secrets absent)
+        working-directory: android
+        run: ./gradlew bundleRelease --stacktrace 2>&1 | tee -a ../gradle-build.log
 
       - name: Lint
         working-directory: android

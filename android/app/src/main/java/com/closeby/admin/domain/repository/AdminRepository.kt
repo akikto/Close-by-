@@ -3,6 +3,7 @@ package com.closeby.admin.domain.repository
 import com.closeby.admin.domain.model.AdminAction
 import com.closeby.admin.domain.model.AdminAdvertisementSummary
 import com.closeby.admin.domain.model.AdminDashboardStats
+import com.closeby.admin.domain.model.AdminDeletionRequestSummary
 import com.closeby.admin.domain.model.AdminProviderSummary
 import com.closeby.admin.domain.model.AdminServiceSummary
 import com.closeby.admin.domain.model.AdminUserSummary
@@ -14,6 +15,12 @@ interface AdminRepository {
     suspend fun isAdmin(userId: String): Boolean
 
     suspend fun getDashboardStats(): Result<AdminDashboardStats>
+
+    suspend fun listAccountDeletionRequests(): Result<List<AdminDeletionRequestSummary>>
+
+    suspend fun approveAccountDeletion(requestId: String, note: String? = null): Result<Unit>
+
+    suspend fun rejectAccountDeletion(requestId: String, note: String? = null): Result<Unit>
 
     suspend fun listUsers(): Result<List<AdminUserSummary>>
 

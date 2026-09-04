@@ -9,6 +9,7 @@ import com.closeby.feature.provider.domain.model.ManagedService
 import com.closeby.feature.provider.domain.model.ManagedServiceSummary
 import com.closeby.feature.provider.domain.model.ProviderProfile
 import com.closeby.feature.provider.domain.model.ProviderOnboardingInput
+import com.closeby.feature.provider.domain.model.ProviderProfileUpdate
 import com.closeby.feature.provider.domain.model.ServiceFormInput
 import com.closeby.feature.provider.domain.repository.ProviderManagementRepository
 import com.closeby.app.data.model.ProviderInsertDto

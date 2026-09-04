@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.feature.admin.AdminDeletionRequestsRoute
 import com.closeby.app.feature.admin.AdminAdvertisementsRoute
 import com.closeby.app.feature.admin.AdminGateRoute
 import com.closeby.app.feature.admin.AdminLoadingRoute
@@ -255,6 +257,10 @@ fun CloseByNavHost(
 
         composable(AppRoutes.ADMIN_USERS) {
             AdminUsersRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_DELETION_REQUESTS) {
+            AdminDeletionRequestsRoute(onBack = { navController.popBackStack() })
         }
 
         composable(
