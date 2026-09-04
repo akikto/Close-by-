@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +35,7 @@ fun CloseByLogo(
         contentDescription = contentDescription,
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(percent = 22)),
+            .clip(CircleShape),
         contentScale = ContentScale.Crop
     )
 }
