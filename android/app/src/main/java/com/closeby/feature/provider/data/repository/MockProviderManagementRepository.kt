@@ -2,6 +2,7 @@ package com.closeby.feature.provider.data.repository
 
 import com.closeby.availability.domain.model.ProviderAvailability
 import com.closeby.feature.provider.domain.model.ManagedService
+import com.closeby.feature.provider.domain.model.ProviderOnboardingInput
 import com.closeby.feature.provider.domain.model.ProviderProfile
 import com.closeby.feature.provider.domain.model.ProviderProfileUpdate
 import com.closeby.feature.provider.domain.model.ServiceFormInput
@@ -176,15 +177,27 @@ class MockProviderManagementRepository : ProviderManagementRepository {
         }
 
     override suspend fun getProviderIdForUser(userId: String): Result<String?> =
-        Result.success(userToProvider[userId] ?: demoProviderId)
+        Result.success(userToProvider[userId])
+
+    override suspend fun createProviderProfile(
+        userId: String,
+        input: ProviderOnboardingInput
+    ): Result<String> = runCatching {
+        userToProvider[userId] ?: run {
+            val id = UUID.randomUUID().toString()
+            userToProvider[userId] = id
+            id
+        }
+    }
 
     override suspend fun ensureProviderForUser(
         userId: String,
         email: String,
         defaultName: String
-    ): Result<String> = Result.success(
-        userToProvider.getOrPut(userId) { demoProviderId }
-    )
+    ): Result<String> = runCatching {
+        userToProvider[userId]
+            ?: throw IllegalStateException("No provider profile exists. Complete provider onboarding first.")
+    }
 
     private fun defaultAvailability(providerId: String): List<ProviderAvailability> =
         DayOfWeek.entries.map { day ->

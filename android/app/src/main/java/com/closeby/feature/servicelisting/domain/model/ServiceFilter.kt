@@ -1,5 +1,7 @@
 package com.closeby.feature.servicelisting.domain.model
 
+import java.time.LocalDate
+
 /**
  * Filter criteria for narrowing down service listings.
  * `distanceKm` here is a filter INPUT (radius chosen by the user) — the
@@ -11,6 +13,7 @@ data class ServiceFilter(
     val radiusKm: RadiusOption? = null,
     val customRadiusKm: Double? = null,
     val availability: AvailabilityFilter = AvailabilityFilter.ANY,
+    val availabilityDate: LocalDate? = null,
     val minRating: Double? = null,
     val maxPrice: Double? = null
 ) {
@@ -20,6 +23,7 @@ data class ServiceFilter(
     val isEmpty: Boolean
         get() = category == null && subcategory == null && radiusKm == null &&
             customRadiusKm == null && availability == AvailabilityFilter.ANY &&
+            availabilityDate == null &&
             minRating == null && maxPrice == null
 }
 

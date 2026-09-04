@@ -54,7 +54,10 @@ object NearbyDependenciesFactory {
                     serviceRepository = stack.serviceRepository,
                     locationProvider = stack.locationProvider,
                     blockedProviderIdsProvider = stack.blockedProviderIdsProvider,
-                    networkMonitor = stack.networkMonitor
+                    networkMonitor = stack.networkMonitor,
+                    filterServicesUseCase = FilterServicesUseCase(
+                        availabilityRepository = ProviderDependenciesFactory.availabilityRepository()
+                    )
                 ) as T
         }
 

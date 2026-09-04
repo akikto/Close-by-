@@ -6,6 +6,7 @@ import com.closeby.notification.data.model.NotificationInsertDto
 import com.closeby.notification.data.model.NotificationReadUpdateDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.gotrue.auth
 
 class NotificationRemoteDataSource(
     private val client: io.github.jan.supabase.SupabaseClient = SupabaseClientProvider.client

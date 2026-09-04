@@ -1,5 +1,6 @@
 package com.closeby.notification.domain.handler
 
+import com.closeby.app.BuildConfig
 import com.closeby.feature.provider.data.remote.ProviderManagementRemoteDataSource
 import com.closeby.notification.domain.model.AppNotification
 import com.closeby.notification.domain.model.AppNotificationEvent
@@ -43,6 +44,10 @@ class NotificationEventHandler(
     }
 
     private suspend fun handleRequestEvent(event: RequestNotificationEvent) {
+        // Request lifecycle notifications are created server-side (schema_phase18 triggers)
+        // when Supabase is configured. Demo/mock mode keeps in-process delivery.
+        if (BuildConfig.SUPABASE_URL.isNotBlank()) return
+
         val request = serviceRequestRepository.getRequestById(event.requestId).getOrNull() ?: return
         val (targetUserId, type, title) = when (event) {
             is RequestNotificationEvent.RequestAccepted -> Triple(

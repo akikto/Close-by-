@@ -64,6 +64,8 @@ object AppRoutes {
     const val RECENTLY_VIEWED = "recently-viewed"
     const val BLOCKED_PROVIDERS = "blocked-providers"
     const val SETTINGS = "settings"
+    const val HELP = "help"
+    const val BECOME_PROVIDER = "become-provider"
 
     fun serviceDetails(serviceId: String): String = "service/$serviceId"
     fun createRequest(serviceId: String): String = "service/$serviceId/request"

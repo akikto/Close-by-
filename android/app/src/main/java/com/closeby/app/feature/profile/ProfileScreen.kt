@@ -60,8 +60,12 @@ fun ProfileScreen(
     onSavedServices: () -> Unit = {},
     onRecentlyViewed: () -> Unit = {},
     onBlockedProviders: () -> Unit = {},
+    onBecomeProvider: () -> Unit = {},
+    onMyServices: (String) -> Unit = {},
     onSettings: () -> Unit = {},
+    onHelp: () -> Unit = {},
     onReportProblem: () -> Unit = {},
+    refreshNonce: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -110,6 +114,12 @@ fun ProfileScreen(
         },
         onSuccessDismiss = migrationManager::clearSuccess
     )
+
+    LaunchedEffect(refreshNonce) {
+        if (refreshNonce > 0) {
+            viewModel.refreshProviderLink()
+        }
+    }
 
     LaunchedEffect(authState) {
         val signedIn = authState as? AuthState.SignedIn
@@ -189,11 +199,13 @@ fun ProfileScreen(
 
                     state.providerId?.let { providerId ->
                         AccountButton("Provider Profile") { onProviderProfile(providerId) }
-                        AccountButton("My Services") { onProviderProfile(providerId) }
-                        AccountOutlinedButton("Requests") { onMyRequests() }
+                        AccountButton("My Services") { onMyServices(providerId) }
+                        AccountOutlinedButton("Provider Requests") { onMyRequests() }
+                    } ?: run {
+                        AccountButton("Become a Provider") { onBecomeProvider() }
                     }
 
-                    AccountButton("My Requests") { onMyRequests() }
+                    AccountOutlinedButton("My Requests") { onMyRequests() }
                     AccountButton("Saved Services") { onSavedServices() }
                     AccountOutlinedButton("Recently Viewed") { onRecentlyViewed() }
                     AccountOutlinedButton("Blocked Providers") { onBlockedProviders() }
@@ -205,7 +217,7 @@ fun ProfileScreen(
                     }
 
                     AccountOutlinedButton("Settings") { onSettings() }
-                    AccountOutlinedButton("Help") { onReportProblem() }
+                    AccountOutlinedButton("Help") { onHelp() }
                     AccountOutlinedButton("Report a Problem") { onReportProblem() }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(

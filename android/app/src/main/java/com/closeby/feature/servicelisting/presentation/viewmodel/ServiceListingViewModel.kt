@@ -174,7 +174,11 @@ class ServiceListingViewModel(
         }
 
         val searched = searchServicesUseCase(allListings, currentQuery)
-        val filtered = filterServicesUseCase(searched, currentFilter)
+        var filtered = filterServicesUseCase(searched, currentFilter)
+        if (currentFilter.availability == com.closeby.feature.servicelisting.domain.model.AvailabilityFilter.AVAILABLE_ON_DATE) {
+            val date = currentFilter.availabilityDate ?: java.time.LocalDate.now()
+            filtered = filterServicesUseCase.applyDateAvailability(filtered, date)
+        }
         val sort = resolveSortOption()
         processedListings = sortServicesUseCase(filtered, sort)
 

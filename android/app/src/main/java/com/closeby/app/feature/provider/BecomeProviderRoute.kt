@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
@@ -22,50 +23,37 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.app.core.di.ProviderDependenciesFactory
 import com.closeby.app.core.location.DeviceCoordinatesReader
-import com.closeby.feature.provider.presentation.AddEditServiceViewModel
-import com.closeby.feature.provider.presentation.ServiceFormUiState
-import com.closeby.feature.provider.ui.AddEditServiceScreen
+import com.closeby.feature.provider.presentation.BecomeProviderUiState
+import com.closeby.feature.provider.presentation.BecomeProviderViewModel
+import com.closeby.feature.provider.ui.BecomeProviderScreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditServiceRoute(
-    providerId: String,
-    serviceId: String?,
+fun BecomeProviderRoute(
     onBack: () -> Unit,
-    onSaved: (String) -> Unit,
+    onProviderCreated: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val viewModel: AddEditServiceViewModel = viewModel(
-        factory = remember(providerId, serviceId) {
+    val scope = rememberCoroutineScope()
+    val viewModel: BecomeProviderViewModel = viewModel(
+        factory = remember {
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    AddEditServiceViewModel(
-                        providerId = providerId,
-                        serviceId = serviceId,
-                        repository = ProviderDependenciesFactory.providerManagementRepository(),
-                        imageUploader = ProviderDependenciesFactory.imageUploader(context)
+                    BecomeProviderViewModel(
+                        authRepository = ProviderDependenciesFactory.authRepository(),
+                        providerRepository = ProviderDependenciesFactory.providerManagementRepository()
                     ) as T
             }
         }
     )
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(serviceId) {
-        if (serviceId != null) {
-            viewModel.load()
-        } else {
-            val coords = DeviceCoordinatesReader.readCurrent(context)
-            viewModel.load(
-                initialLatitude = coords?.latitude,
-                initialLongitude = coords?.longitude
-            )
-        }
-    }
     LaunchedEffect(uiState) {
-        if (uiState is ServiceFormUiState.Saved) {
-            onSaved((uiState as ServiceFormUiState.Saved).serviceId)
+        if (uiState is BecomeProviderUiState.Success) {
+            onProviderCreated((uiState as BecomeProviderUiState.Success).providerId)
         }
     }
 
@@ -73,7 +61,7 @@ fun AddEditServiceRoute(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (serviceId == null) "Add Service" else "Edit Service") },
+                title = { Text("Become a Provider") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -82,12 +70,23 @@ fun AddEditServiceRoute(
             )
         }
     ) { padding ->
-        AddEditServiceScreen(
+        BecomeProviderScreen(
             state = uiState,
-            onSave = viewModel::save,
             onUpdate = viewModel::updateForm,
-            onPickImage = viewModel::queueImage,
-            onRemoveImage = viewModel::removeImage,
+            onCaptureLocation = {
+                scope.launch {
+                    val coords = DeviceCoordinatesReader.readCurrent(context)
+                    if (coords != null) {
+                        viewModel.setLocation(coords.latitude, coords.longitude)
+                    } else {
+                        viewModel.setError(
+                            "Could not get GPS location. Enable location services and try again."
+                        )
+                    }
+                }
+            },
+            onSubmit = viewModel::submit,
+            onDismissError = viewModel::resetErrorToReady,
             modifier = Modifier.fillMaxSize().padding(padding)
         )
     }

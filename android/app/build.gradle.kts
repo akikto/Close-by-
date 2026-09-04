@@ -19,12 +19,12 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.closeby.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.closeby.app"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 2
         versionName = "1.0.0-rc1"
 
