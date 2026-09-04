@@ -65,14 +65,14 @@ class MockAdminRepository(
         requireAdmin {
             val existing = deletionRequests[requestId] ?: throw NoSuchElementException("Request not found.")
             deletionRequests[requestId] = existing.copy(status = "COMPLETED", processedAt = System.currentTimeMillis())
-            logAudit(AdminAction.APPROVE_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
+            recordAudit(AdminAction.APPROVE_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
         }
 
     override suspend fun rejectAccountDeletion(requestId: String, note: String?): Result<Unit> =
         requireAdmin {
             val existing = deletionRequests[requestId] ?: throw NoSuchElementException("Request not found.")
             deletionRequests[requestId] = existing.copy(status = "CANCELLED", processedAt = System.currentTimeMillis())
-            logAudit(AdminAction.REJECT_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
+            recordAudit(AdminAction.REJECT_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
         }
 
     override suspend fun listUsers(): Result<List<AdminUserSummary>> =

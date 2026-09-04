@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "=== Gradle build errors ==="
           if [ -f gradle-build.log ]; then
-            grep -E "^e:|^FAILURE:|^> Task :app:compile" gradle-build.log | tail -80 | while IFS= read -r line; do
+            grep -E "^e:|^FAILURE:|^> Task :app:compile|FAILED|Tests run:" gradle-build.log | tail -80 | while IFS= read -r line; do
               echo "::error title=Build Error::$line"
             done
             tail -40 gradle-build.log
