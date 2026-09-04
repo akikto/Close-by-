@@ -124,8 +124,8 @@ fun FilterSheet(
             )
 
             SectionLabel("Availability")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AvailabilityFilter.entries.forEach { option ->
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(AvailabilityFilter.entries.toList()) { option ->
                     FilterChip(
                         selected = filter.availability == option,
                         onClick = {

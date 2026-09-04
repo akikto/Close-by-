@@ -41,7 +41,7 @@ enum class RadiusOption(val km: Double, val label: String) {
 enum class AvailabilityFilter(val label: String) {
     ANY("Any"),
     AVAILABLE_NOW("Available Now"),
-    AVAILABLE_ON_DATE("Available on selected date")
+    AVAILABLE_ON_DATE("Pick date")
 }
 
 enum class RatingFilter(val minRating: Double, val label: String) {
