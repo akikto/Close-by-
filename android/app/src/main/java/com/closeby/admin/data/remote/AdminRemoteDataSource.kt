@@ -1,5 +1,7 @@
 package com.closeby.admin.data.remote
 
+import com.closeby.admin.data.model.AccountDeletionRequestDto
+import com.closeby.admin.data.model.AccountDeletionStatusUpdateDto
 import com.closeby.admin.data.model.AdminAuditLogInsertDto
 import com.closeby.admin.data.model.AdminDashboardStatsDto
 import com.closeby.admin.data.model.AdvertisementAdminDto
@@ -174,5 +176,19 @@ class AdminRemoteDataSource(
     suspend fun insertAuditLog(dto: AdminAuditLogInsertDto) {
         client.from("admin_audit_logs")
             .insert(dto)
+    }
+
+    suspend fun listAccountDeletionRequests(): List<AccountDeletionRequestDto> =
+        client.from("account_deletion_requests")
+            .select {
+                order("requested_at", Order.DESCENDING)
+            }
+            .decodeList<AccountDeletionRequestDto>()
+
+    suspend fun updateAccountDeletionStatus(requestId: String, dto: AccountDeletionStatusUpdateDto) {
+        client.from("account_deletion_requests")
+            .update(dto) {
+                filter { eq("id", requestId) }
+            }
     }
 }

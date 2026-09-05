@@ -1,6 +1,9 @@
 package com.closeby.notification.domain.handler
 
+import com.closeby.app.BuildConfig
+import com.closeby.app.core.network.SupabaseClientProvider
 import com.closeby.feature.provider.data.remote.ProviderManagementRemoteDataSource
+import io.github.jan.supabase.gotrue.auth
 import com.closeby.notification.domain.model.AppNotification
 import com.closeby.notification.domain.model.AppNotificationEvent
 import com.closeby.notification.domain.model.AppNotificationEventBridge
@@ -26,7 +29,10 @@ class NotificationEventHandler(
     private val notificationRepository: NotificationRepository,
     private val serviceRequestRepository: ServiceRequestRepository,
     private val resolveProviderUserId: suspend (providerId: String) -> String?,
-    private val deduplicator: NotificationDeduplicator = NotificationDeduplicator()
+    private val deduplicator: NotificationDeduplicator = NotificationDeduplicator(),
+    private val currentUserIdProvider: suspend () -> String? = {
+        SupabaseClientProvider.client.auth.currentUserOrNull()?.id
+    }
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var subscribed = false
@@ -43,6 +49,10 @@ class NotificationEventHandler(
     }
 
     private suspend fun handleRequestEvent(event: RequestNotificationEvent) {
+        // Request lifecycle notifications are created server-side (schema_phase18 triggers)
+        // when Supabase is configured. Demo/mock mode keeps in-process delivery.
+        if (BuildConfig.SUPABASE_URL.isNotBlank()) return
+
         val request = serviceRequestRepository.getRequestById(event.requestId).getOrNull() ?: return
         val (targetUserId, type, title) = when (event) {
             is RequestNotificationEvent.RequestAccepted -> Triple(
@@ -87,6 +97,7 @@ class NotificationEventHandler(
     }
 
     private suspend fun handleAppEvent(event: AppNotificationEvent) {
+        if (!canPersistClientNotification(event.userId)) return
         persist(
             userId = event.userId,
             type = event.type,
@@ -97,6 +108,15 @@ class NotificationEventHandler(
             eventKey = event.eventKey
         )
     }
+
+    private suspend fun canPersistClientNotification(targetUserId: String): Boolean {
+        if (!usesServerNotifications) return true
+        val currentUserId = currentUserIdProvider() ?: return false
+        return currentUserId == targetUserId
+    }
+
+    private val usesServerNotifications: Boolean
+        get() = BuildConfig.SUPABASE_URL.isNotBlank()
 
     private suspend fun persist(
         userId: String,

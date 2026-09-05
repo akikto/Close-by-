@@ -1,5 +1,6 @@
 package com.closeby.admin.data.mapper
 
+import com.closeby.admin.data.model.AccountDeletionRequestDto
 import com.closeby.admin.data.model.AdminDashboardStatsDto
 import com.closeby.admin.data.model.AdvertisementAdminDto
 import com.closeby.admin.data.model.ProviderAdminDto
@@ -7,6 +8,7 @@ import com.closeby.admin.data.model.ServiceAdminDto
 import com.closeby.admin.data.model.UserProfileDto
 import com.closeby.admin.domain.model.AdminAdvertisementSummary
 import com.closeby.admin.domain.model.AdminDashboardStats
+import com.closeby.admin.domain.model.AdminDeletionRequestSummary
 import com.closeby.admin.domain.model.AdminProviderSummary
 import com.closeby.admin.domain.model.AdminServiceSummary
 import com.closeby.admin.domain.model.AdminUserSummary
@@ -22,7 +24,19 @@ object AdminMapper {
             activeServices = dto.activeServices,
             pendingVerifications = dto.pendingVerifications,
             pendingAdvertisements = dto.pendingAdvertisements,
-            openReports = dto.openReports
+            openReports = dto.openReports,
+            pendingDeletionRequests = dto.pendingDeletionRequests
+        )
+
+    fun toDomain(dto: AccountDeletionRequestDto, displayName: String? = null): AdminDeletionRequestSummary =
+        AdminDeletionRequestSummary(
+            id = dto.id,
+            userId = dto.userId,
+            displayName = displayName,
+            reason = dto.reason,
+            status = dto.status,
+            requestedAt = parseInstant(dto.requestedAt),
+            processedAt = dto.processedAt?.let(::parseInstant)
         )
 
     fun toDomain(dto: UserProfileDto): AdminUserSummary =

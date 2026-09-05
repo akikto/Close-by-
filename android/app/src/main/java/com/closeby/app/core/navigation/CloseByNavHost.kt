@@ -3,6 +3,7 @@ package com.closeby.app.core.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -16,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.closeby.app.core.di.ProviderDependenciesFactory
+import com.closeby.app.feature.admin.AdminDeletionRequestsRoute
 import com.closeby.app.feature.admin.AdminAdvertisementsRoute
 import com.closeby.app.feature.admin.AdminGateRoute
 import com.closeby.app.feature.admin.AdminLoadingRoute
@@ -30,7 +32,10 @@ import com.closeby.app.feature.blocked.BlockedProvidersRoute
 import com.closeby.app.feature.explore.ExploreScreen
 import com.closeby.app.feature.home.HomeScreen
 import com.closeby.app.feature.notification.NotificationsRoute
+import com.closeby.app.feature.profile.HelpScreen
 import com.closeby.app.feature.profile.ProfileScreen
+import com.closeby.app.feature.profile.SettingsScreen
+import com.closeby.app.feature.provider.BecomeProviderRoute
 import com.closeby.app.feature.saved.RecentlyViewedRoute
 import com.closeby.app.feature.saved.SavedServicesRoute
 import com.closeby.app.feature.provider.AddEditServiceRoute
@@ -53,6 +58,8 @@ fun CloseByNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    var profileRefreshNonce by remember { mutableIntStateOf(0) }
+
     NavHost(
         navController = navController,
         startDestination = TopLevelDestination.Home.route,
@@ -121,8 +128,15 @@ fun CloseByNavHost(
         }
         composable(TopLevelDestination.Profile.route) {
             ProfileScreen(
+                refreshNonce = profileRefreshNonce,
                 onProviderProfile = { providerId ->
                     navController.navigate(AppRoutes.providerProfile(providerId))
+                },
+                onMyServices = { providerId ->
+                    navController.navigate(AppRoutes.myServices(providerId))
+                },
+                onBecomeProvider = {
+                    navController.navigate(AppRoutes.BECOME_PROVIDER)
                 },
                 onMyAdvertisements = { ownerId ->
                     navController.navigate(AppRoutes.myAdvertisements(ownerId))
@@ -147,8 +161,35 @@ fun CloseByNavHost(
                 onBlockedProviders = {
                     navController.navigate(AppRoutes.BLOCKED_PROVIDERS)
                 },
+                onSettings = {
+                    navController.navigate(AppRoutes.SETTINGS)
+                },
+                onHelp = {
+                    navController.navigate(AppRoutes.HELP)
+                },
                 onReportProblem = {
                     navController.navigate(AppRoutes.report(ReportTargetType.SERVICE.name, "support"))
+                }
+            )
+        }
+
+        composable(AppRoutes.SETTINGS) {
+            SettingsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.HELP) {
+            HelpScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.BECOME_PROVIDER) {
+            BecomeProviderRoute(
+                onBack = { navController.popBackStack() },
+                onProviderCreated = {
+                    profileRefreshNonce++
+                    navController.popBackStack(
+                        route = TopLevelDestination.Profile.route,
+                        inclusive = false
+                    )
                 }
             )
         }
@@ -216,6 +257,10 @@ fun CloseByNavHost(
 
         composable(AppRoutes.ADMIN_USERS) {
             AdminUsersRoute(onBack = { navController.popBackStack() })
+        }
+
+        composable(AppRoutes.ADMIN_DELETION_REQUESTS) {
+            AdminDeletionRequestsRoute(onBack = { navController.popBackStack() })
         }
 
         composable(

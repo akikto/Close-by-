@@ -10,7 +10,8 @@ data class AdminDashboardStatsDto(
     @SerialName("active_services") val activeServices: Int = 0,
     @SerialName("pending_verifications") val pendingVerifications: Int = 0,
     @SerialName("pending_advertisements") val pendingAdvertisements: Int = 0,
-    @SerialName("open_reports") val openReports: Int = 0
+    @SerialName("open_reports") val openReports: Int = 0,
+    @SerialName("pending_deletion_requests") val pendingDeletionRequests: Int = 0
 )
 
 @Serializable

@@ -10,5 +10,9 @@
 *.apk
 *.aab
 
-# Never commit real Supabase credentials
+# Never commit real Supabase credentials or signing secrets
 local.properties
+android/keystore.properties
+*.keystore
+*.jks
+android/build/release.keystore

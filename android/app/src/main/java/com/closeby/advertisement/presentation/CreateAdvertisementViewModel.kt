@@ -47,15 +47,23 @@ class CreateAdvertisementViewModel(
 
     private var pendingImageUri: Uri? = null
 
-    fun load() {
+    fun load(initialLatitude: Double? = null, initialLongitude: Double? = null) {
         val today = LocalDate.now()
+        val lat = initialLatitude
+        val lng = initialLongitude
+        if (lat == null || lng == null) {
+            _uiState.value = CreateAdUiState.Error(
+                "Advertisement location is required. Enable GPS and try again."
+            )
+            return
+        }
         _uiState.value = CreateAdUiState.Ready(
             businessName = "",
             title = "",
             description = "",
             contactNumber = "",
-            latitude = 12.9716,
-            longitude = 77.5946,
+            latitude = lat,
+            longitude = lng,
             radiusPreset = AdRadiusPreset.KM_5,
             customRadiusKm = "5",
             startDate = today,

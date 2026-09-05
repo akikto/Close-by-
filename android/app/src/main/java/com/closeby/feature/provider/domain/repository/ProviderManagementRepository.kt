@@ -1,6 +1,7 @@
 package com.closeby.feature.provider.domain.repository
 
 import com.closeby.feature.provider.domain.model.ManagedService
+import com.closeby.feature.provider.domain.model.ProviderOnboardingInput
 import com.closeby.feature.provider.domain.model.ProviderProfile
 import com.closeby.feature.provider.domain.model.ProviderProfileUpdate
 import com.closeby.feature.provider.domain.model.ServiceFormInput
@@ -41,6 +42,16 @@ interface ProviderManagementRepository {
 
     suspend fun getProviderIdForUser(userId: String): Result<String?>
 
+    /** Creates a provider profile only when the user explicitly opts in. */
+    suspend fun createProviderProfile(
+        userId: String,
+        input: ProviderOnboardingInput
+    ): Result<String>
+
+    /**
+     * Returns an existing provider id for the user. Does not create a profile.
+     * @deprecated Prefer [getProviderIdForUser] or [createProviderProfile].
+     */
     suspend fun ensureProviderForUser(
         userId: String,
         email: String,

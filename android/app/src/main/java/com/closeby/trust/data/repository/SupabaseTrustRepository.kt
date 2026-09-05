@@ -119,9 +119,7 @@ class SupabaseTrustRepository(
                 comment = input.comment?.trim()
             )
         )
-        TrustMapper.toDomain(dto)?.also { review ->
-            NotificationEventPublisher.reviewReceived(revieweeId, requestId, request.providerId)
-        } ?: throw IllegalStateException("Review has invalid data.")
+        TrustMapper.toDomain(dto) ?: throw IllegalStateException("Review has invalid data.")
     }
 
     override suspend fun getReviewsForProvider(providerId: String) = runCatching {

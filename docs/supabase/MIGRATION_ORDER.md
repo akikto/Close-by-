@@ -21,6 +21,7 @@ Apply SQL files in this exact order. Each phase depends on prior schemas.
 | Order | File | Phase | Depends on |
 |-------|------|-------|------------|
 | 12 | `schema_phase17.sql` | 17 — Production indexes | Phase 11 |
+| 13 | `schema_phase18.sql` | 18 — Server-side notifications | Phase 6, 17 |
 
 Forward-only index migration for saved services, notifications, requests, reviews, reports, ads.
 

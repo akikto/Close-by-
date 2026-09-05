@@ -53,16 +53,24 @@ class AddEditServiceViewModel(
 
     private var pendingUploads = mutableListOf<Uri>()
 
-    fun load() {
+    fun load(initialLatitude: Double? = null, initialLongitude: Double? = null) {
         if (serviceId == null) {
+            val lat = initialLatitude
+            val lng = initialLongitude
+            if (lat == null || lng == null) {
+                _uiState.value = ServiceFormUiState.Error(
+                    "Location is required. Enable GPS and try again."
+                )
+                return
+            }
             _uiState.value = ServiceFormUiState.Ready(
                 serviceId = null,
                 category = ServiceCategory.EQUIPMENT,
                 subcategory = ServiceSubcategory.WATER_PUMP,
                 title = "",
                 description = "",
-                latitude = 12.9716,
-                longitude = 77.5946,
+                latitude = lat,
+                longitude = lng,
                 availability = AvailabilityStatus.AVAILABLE_NOW,
                 contactNumber = "",
                 imageUrls = emptyList(),

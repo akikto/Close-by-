@@ -1,18 +1,20 @@
 package com.closeby.feature.servicelisting.domain.usecase
 
+import com.closeby.availability.domain.repository.AvailabilityRepository
 import com.closeby.feature.servicelisting.domain.model.AvailabilityFilter
 import com.closeby.feature.servicelisting.domain.model.AvailabilityStatus
 import com.closeby.feature.servicelisting.domain.model.ServiceFilter
 import com.closeby.feature.servicelisting.domain.model.ServiceListing
+import java.time.LocalDate
+import java.time.LocalTime
 
 /**
- * Applies a [ServiceFilter] to a list of listings.
- *
- * Radius filtering relies on `distanceInfo.distanceKm`, which must already
- * be populated by the Location module before this use case runs. This use
- * case does not compute distance itself.
+ * Applies synchronous filters, then optionally checks provider calendar availability
+ * for [AvailabilityFilter.AVAILABLE_ON_DATE].
  */
-class FilterServicesUseCase {
+class FilterServicesUseCase(
+    private val availabilityRepository: AvailabilityRepository? = null
+) {
 
     operator fun invoke(listings: List<ServiceListing>, filter: ServiceFilter): List<ServiceListing> {
         var result = listings
@@ -56,5 +58,20 @@ class FilterServicesUseCase {
         }
 
         return result
+    }
+
+    suspend fun applyDateAvailability(
+        listings: List<ServiceListing>,
+        date: LocalDate
+    ): List<ServiceListing> {
+        val repository = availabilityRepository ?: return listings
+        return listings.filter { listing ->
+            repository.isAvailable(
+                providerId = listing.providerId,
+                date = date,
+                startTime = LocalTime.of(9, 0),
+                endTime = LocalTime.of(17, 0)
+            ).getOrDefault(false)
+        }
     }
 }

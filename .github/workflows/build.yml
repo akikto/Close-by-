@@ -21,15 +21,23 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platforms;android-36 build-tools;35.0.0
+
+      - name: Write Android SDK path
+        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" >> android/local.properties
+
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
-        continue-on-error: true
 
       - name: Set up Gradle wrapper (if missing)
         run: |
           cd android
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.7
+          if [ ! -f gradlew ] || [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            gradle wrapper --gradle-version 8.9
+            chmod +x gradlew
           fi
 
       - name: Configure Supabase credentials
@@ -51,6 +59,10 @@ jobs:
           set -o pipefail
           ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
 
+      - name: Build release AAB (debug signing fallback when secrets absent)
+        working-directory: android
+        run: ./gradlew bundleRelease --stacktrace 2>&1 | tee -a ../gradle-build.log
+
       - name: Lint
         working-directory: android
         continue-on-error: true
@@ -68,7 +80,7 @@ jobs:
         run: |
           echo "=== Gradle build errors ==="
           if [ -f gradle-build.log ]; then
-            grep -E "^e:|^FAILURE:|^> Task :app:compile" gradle-build.log | tail -80 | while IFS= read -r line; do
+            grep -E "^e:|^FAILURE:|^> Task :app:compile|FAILED|Tests run:" gradle-build.log | tail -80 | while IFS= read -r line; do
               echo "::error title=Build Error::$line"
             done
             tail -40 gradle-build.log

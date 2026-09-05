@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.closeby.advertisement.presentation.CreateAdUiState
 import com.closeby.advertisement.presentation.CreateAdvertisementViewModel
 import com.closeby.advertisement.ui.CreateAdvertisementScreen
+import com.closeby.app.core.location.DeviceCoordinatesReader
 import com.closeby.app.core.di.AdvertisementDependenciesFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +42,13 @@ fun CreateAdvertisementRoute(
     )
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.load() }
+    LaunchedEffect(Unit) {
+        val coords = DeviceCoordinatesReader.readCurrent(context)
+        viewModel.load(
+            initialLatitude = coords?.latitude,
+            initialLongitude = coords?.longitude
+        )
+    }
     LaunchedEffect(uiState) {
         if (uiState is CreateAdUiState.Saved) onCreated()
     }

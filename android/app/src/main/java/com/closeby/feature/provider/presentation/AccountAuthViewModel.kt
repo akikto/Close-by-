@@ -59,7 +59,7 @@ class AccountAuthViewModel(
         _authState.value = AuthState.OtpVerification(email)
         viewModelScope.launch {
             authRepository.verifyEmailOtp(email, token)
-                .onSuccess { session -> linkProviderAndSignIn(session) }
+                .onSuccess { session -> completeSignIn(session) }
                 .onFailure { error ->
                     _authState.value = AuthState.Error(error.message ?: "Invalid verification code.")
                 }
@@ -111,17 +111,18 @@ class AccountAuthViewModel(
         }
     }
 
-    private suspend fun linkProviderAndSignIn(session: AuthSession) {
-        val providerId = providerRepository.ensureProviderForUser(
-            userId = session.userId,
-            email = session.email,
-            defaultName = session.email.substringBefore("@")
-        ).getOrElse {
-            _authState.value = AuthState.Error(it.message ?: "Could not link provider account.")
-            return
-        }
+    private suspend fun completeSignIn(session: AuthSession) {
+        val providerId = providerRepository.getProviderIdForUser(session.userId).getOrNull()
         _authState.value = AuthState.SignedIn(session = session, providerId = providerId)
         onUserSignedIn?.invoke(session.userId)
+    }
+
+    fun refreshProviderLink() {
+        val session = (authState.value as? AuthState.SignedIn)?.session ?: return
+        viewModelScope.launch {
+            val providerId = providerRepository.getProviderIdForUser(session.userId).getOrNull()
+            _authState.value = AuthState.SignedIn(session = session, providerId = providerId)
+        }
     }
 
     private suspend fun restoreSession() {
@@ -131,11 +132,6 @@ class AccountAuthViewModel(
             return
         }
         val providerId = providerRepository.getProviderIdForUser(session.userId).getOrNull()
-            ?: providerRepository.ensureProviderForUser(
-                session.userId,
-                session.email,
-                session.email.substringBefore("@")
-            ).getOrNull()
         _authState.value = AuthState.SignedIn(session = session, providerId = providerId)
     }
 }

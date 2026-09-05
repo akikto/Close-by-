@@ -1,6 +1,7 @@
 package com.closeby.admin.data.repository
 
 import com.closeby.admin.data.mapper.AdminMapper
+import com.closeby.admin.data.model.AccountDeletionStatusUpdateDto
 import com.closeby.admin.data.model.AdminAuditLogInsertDto
 import com.closeby.admin.data.model.AdvertisementStatusUpdateDto
 import com.closeby.admin.data.model.ProviderVerificationUpdateDto
@@ -10,13 +11,11 @@ import com.closeby.admin.domain.model.AdminAccessDeniedException
 import com.closeby.admin.domain.model.AdminAction
 import com.closeby.admin.domain.model.AdminAdvertisementSummary
 import com.closeby.admin.domain.model.AdminDashboardStats
+import com.closeby.admin.domain.model.AdminDeletionRequestSummary
 import com.closeby.admin.domain.model.AdminProviderSummary
 import com.closeby.admin.domain.model.AdminServiceSummary
 import com.closeby.admin.domain.model.AdminUserSummary
 import com.closeby.admin.domain.repository.AdminRepository
-import com.closeby.app.data.remote.ProviderRemoteDataSource
-import com.closeby.notification.domain.handler.NotificationEventPublisher
-import com.closeby.advertisement.data.remote.AdvertisementRemoteDataSource
 import com.closeby.trust.data.mapper.TrustMapper
 import com.closeby.trust.domain.model.Report
 import com.closeby.trust.domain.model.ReportStatus
@@ -25,9 +24,7 @@ import java.time.Instant
 
 class SupabaseAdminRepository(
     private val remote: AdminRemoteDataSource = AdminRemoteDataSource(),
-    private val client: io.github.jan.supabase.SupabaseClient = com.closeby.app.core.network.SupabaseClientProvider.client,
-    private val providerRemote: ProviderRemoteDataSource = ProviderRemoteDataSource(),
-    private val advertisementRemote: AdvertisementRemoteDataSource = AdvertisementRemoteDataSource()
+    private val client: io.github.jan.supabase.SupabaseClient = com.closeby.app.core.network.SupabaseClientProvider.client
 ) : AdminRepository {
 
     override suspend fun isAdmin(userId: String): Boolean =
@@ -38,6 +35,34 @@ class SupabaseAdminRepository(
     override suspend fun getDashboardStats(): Result<AdminDashboardStats> =
         requireAdmin {
             remote.getDashboardStats().let(AdminMapper::toDomain)
+        }
+
+    override suspend fun listAccountDeletionRequests(): Result<List<AdminDeletionRequestSummary>> =
+        requireAdmin {
+            val profiles = remote.listUserProfiles().associateBy { it.userId }
+            remote.listAccountDeletionRequests().map { dto ->
+                AdminMapper.toDomain(dto, profiles[dto.userId]?.displayName)
+            }
+        }
+
+    override suspend fun approveAccountDeletion(requestId: String, note: String?): Result<Unit> =
+        requireAdmin {
+            val now = Instant.now().toString()
+            remote.updateAccountDeletionStatus(
+                requestId,
+                AccountDeletionStatusUpdateDto(status = "COMPLETED", processedAt = now)
+            )
+            logAuditInternal(AdminAction.APPROVE_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
+        }
+
+    override suspend fun rejectAccountDeletion(requestId: String, note: String?): Result<Unit> =
+        requireAdmin {
+            val now = Instant.now().toString()
+            remote.updateAccountDeletionStatus(
+                requestId,
+                AccountDeletionStatusUpdateDto(status = "CANCELLED", processedAt = now)
+            )
+            logAuditInternal(AdminAction.REJECT_ACCOUNT_DELETION, "ACCOUNT", requestId, note)
         }
 
     override suspend fun listUsers(): Result<List<AdminUserSummary>> =
@@ -88,9 +113,6 @@ class SupabaseAdminRepository(
             )
             remote.updateLatestVerificationSubmission(providerId, "APPROVED", note)
             logAuditInternal(AdminAction.APPROVE_VERIFICATION, "PROVIDER", providerId, note)
-            providerRemote.getProviderById(providerId)?.userId?.let { userId ->
-                NotificationEventPublisher.verificationApproved(userId, providerId)
-            }
         }
 
     override suspend fun rejectVerification(providerId: String, reason: String): Result<Unit> =
@@ -107,9 +129,6 @@ class SupabaseAdminRepository(
             )
             remote.updateLatestVerificationSubmission(providerId, "REJECTED", reason)
             logAuditInternal(AdminAction.REJECT_VERIFICATION, "PROVIDER", providerId, reason)
-            providerRemote.getProviderById(providerId)?.userId?.let { userId ->
-                NotificationEventPublisher.verificationRejected(userId, providerId, reason)
-            }
         }
 
     override suspend fun suspendProvider(providerId: String, reason: String?): Result<Unit> =
@@ -162,12 +181,6 @@ class SupabaseAdminRepository(
                 )
             )
             logAuditInternal(AdminAction.UPDATE_REPORT_STATUS, "REPORT", reportId, note)
-            remote.listReports()
-                .firstOrNull { it.id == reportId }
-                ?.reporterId
-                ?.let { reporterId ->
-                    NotificationEventPublisher.reportStatusUpdated(reporterId, reportId, status.name)
-                }
         }
 
     override suspend fun listAdvertisements(): Result<List<AdminAdvertisementSummary>> =
@@ -188,9 +201,6 @@ class SupabaseAdminRepository(
                 )
             )
             logAuditInternal(AdminAction.APPROVE_AD, "ADVERTISEMENT", adId, note)
-            advertisementRemote.getById(adId)?.ownerId?.let { ownerId ->
-                NotificationEventPublisher.adApproved(ownerId, adId)
-            }
         }
 
     override suspend fun rejectAd(adId: String, reason: String): Result<Unit> =
@@ -206,9 +216,6 @@ class SupabaseAdminRepository(
                 )
             )
             logAuditInternal(AdminAction.REJECT_AD, "ADVERTISEMENT", adId, reason)
-            advertisementRemote.getById(adId)?.ownerId?.let { ownerId ->
-                NotificationEventPublisher.adRejected(ownerId, adId, reason)
-            }
         }
 
     override suspend fun pauseAd(adId: String, reason: String?): Result<Unit> =

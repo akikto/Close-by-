@@ -8,6 +8,7 @@ import com.closeby.feature.provider.data.remote.ProviderManagementRemoteDataSour
 import com.closeby.feature.provider.domain.model.ManagedService
 import com.closeby.feature.provider.domain.model.ManagedServiceSummary
 import com.closeby.feature.provider.domain.model.ProviderProfile
+import com.closeby.feature.provider.domain.model.ProviderOnboardingInput
 import com.closeby.feature.provider.domain.model.ProviderProfileUpdate
 import com.closeby.feature.provider.domain.model.ServiceFormInput
 import com.closeby.feature.provider.domain.repository.ProviderManagementRepository
@@ -141,24 +142,33 @@ class SupabaseProviderManagementRepository(
     override suspend fun getProviderIdForUser(userId: String): Result<String?> =
         runCatching { remote.getProviderByUserId(userId)?.id }
 
+    override suspend fun createProviderProfile(
+        userId: String,
+        input: ProviderOnboardingInput
+    ): Result<String> = runCatching {
+        remote.getProviderByUserId(userId)?.id?.let { return@runCatching it }
+        val created = remote.insertProvider(
+            ProviderInsertDto(
+                name = input.name.trim(),
+                category = input.category.name,
+                phoneNumber = input.phoneNumber.trim(),
+                latitude = input.latitude,
+                longitude = input.longitude,
+                userId = userId
+            )
+        )
+        created.id
+    }
+
     override suspend fun ensureProviderForUser(
         userId: String,
         email: String,
         defaultName: String
     ): Result<String> = runCatching {
-        remote.getProviderByUserId(userId)?.id ?: run {
-            val created = remote.insertProvider(
-                ProviderInsertDto(
-                    name = defaultName.ifBlank { email.substringBefore("@") },
-                    category = ServiceCategory.EQUIPMENT.name,
-                    phoneNumber = "",
-                    latitude = 12.9716,
-                    longitude = 77.5946,
-                    userId = userId
-                )
+        remote.getProviderByUserId(userId)?.id
+            ?: throw IllegalStateException(
+                "No provider profile exists. Use explicit provider onboarding."
             )
-            created.id
-        }
     }
 
     private suspend fun assertOwnership(serviceId: String, providerId: String) {
