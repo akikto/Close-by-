@@ -53,15 +53,42 @@ jobs:
             echo "No Supabase secrets found — APK will use demo auth (OTP emails are not sent)."
           fi
 
+      - name: Verify release signing secrets
+        env:
+          RELEASE_STORE_FILE_BASE64: ${{ secrets.RELEASE_STORE_FILE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$RELEASE_STORE_FILE_BASE64" ] || [ -z "$RELEASE_STORE_PASSWORD" ] || \
+             [ -z "$RELEASE_KEY_ALIAS" ] || [ -z "$RELEASE_KEY_PASSWORD" ]; then
+            echo "::error::Release signing secrets are required. Add RELEASE_STORE_FILE_BASE64, RELEASE_STORE_PASSWORD, RELEASE_KEY_ALIAS, and RELEASE_KEY_PASSWORD — see docs/RELEASE_SIGNING.md"
+            exit 1
+          fi
+          echo "Release signing secrets present."
+
+      - name: Run unit tests
+        working-directory: android
+        run: |
+          set -o pipefail
+          ./gradlew test --stacktrace 2>&1 | tee ../gradle-build.log
+
       - name: Build debug APK
         working-directory: android
         run: |
           set -o pipefail
-          ./gradlew test assembleDebug --stacktrace 2>&1 | tee ../gradle-build.log
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee -a ../gradle-build.log
 
-      - name: Build release AAB (debug signing fallback when secrets absent)
+      - name: Build release APK and AAB
         working-directory: android
-        run: ./gradlew bundleRelease --stacktrace 2>&1 | tee -a ../gradle-build.log
+        env:
+          RELEASE_STORE_FILE_BASE64: ${{ secrets.RELEASE_STORE_FILE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease bundleRelease --stacktrace 2>&1 | tee -a ../gradle-build.log
 
       - name: Lint
         working-directory: android

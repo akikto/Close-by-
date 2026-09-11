@@ -4,17 +4,13 @@ Release keystores and passwords must **never** be committed to git.
 
 ## Local release build
 
-1. Create a keystore:
+1. Create a keystore (one-time, keep the file and passwords safe):
    ```bash
-   keytool -genkey -v -keystore closeby-release.keystore -alias closeby -keyalg RSA -keysize 2048 -validity 10000
+   cd android
+   keytool -genkeypair -v -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 \
+     -keystore closeby-release.jks -alias closeby-release
    ```
-2. Create `android/keystore.properties` (git-ignored):
-   ```properties
-   storeFile=../closeby-release.keystore
-   storePassword=<your-store-password>
-   keyAlias=closeby
-   keyPassword=<your-key-password>
-   ```
+2. Copy `android/keystore.properties.example` → `android/keystore.properties` and set passwords.
 3. Build release AAB:
    ```bash
    cd android
@@ -23,7 +19,7 @@ Release keystores and passwords must **never** be committed to git.
 
 Output: `android/app/build/outputs/bundle/release/app-release.aab`
 
-If `keystore.properties` is missing, `bundleRelease` falls back to the **debug** keystore so CI and local smoke builds can still produce an AAB. Production Play Store uploads must use a real release keystore.
+**Release builds require a production keystore.** There is no debug-keystore fallback for `release`. Configure `keystore.properties` locally or `RELEASE_STORE_*` in CI before running `assembleRelease` / `bundleRelease`.
 
 ## CI / GitHub Actions secrets
 
@@ -33,7 +29,7 @@ Configure these repository secrets:
 |--------|-------------|
 | `RELEASE_STORE_FILE_BASE64` | Base64-encoded `.keystore` or `.jks` file |
 | `RELEASE_STORE_PASSWORD` | Keystore password |
-| `RELEASE_KEY_ALIAS` | Key alias (e.g. `closeby`) |
+| `RELEASE_KEY_ALIAS` | Key alias (e.g. `closeby-release`) |
 | `RELEASE_KEY_PASSWORD` | Key password |
 
 The build script decodes `RELEASE_STORE_FILE_BASE64` into `android/build/release.keystore` at build time (not committed).

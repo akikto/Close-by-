@@ -23,15 +23,16 @@ Use before beta or production release.
 
 ## Database
 
-- [ ] All migrations applied per `docs/supabase/MIGRATION_ORDER.md`
+- [ ] All migrations applied per `docs/supabase/MIGRATION_ORDER.md` (including **`schema_phase18.sql`**)
 - [ ] RLS verified per `docs/supabase/SECURITY_AUDIT.md`
+- [ ] Admin user configured (`user_profiles.is_admin = true`)
 
 ## Functional smoke tests
 
 - [ ] Anonymous: Home → Explore → Service Details → Call/SMS
 - [ ] Auth: Sign in → Save → Request → Notifications
 - [ ] Provider: My Services → Requests → Accept/Reject
-- [ ] Admin: Dashboard → Users/Providers/Services/Reports/Ads
+- [ ] Admin: Dashboard → Users/Providers/Services/Reports/Ads/**Account Deletion Requests**
 - [ ] Offline: cached listings visible with banner; request submit blocked offline
 
 ## Privacy & security

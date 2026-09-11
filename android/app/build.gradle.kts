@@ -67,15 +67,20 @@ android {
     signingConfigs {
         create("release") {
             val store = resolveSigningStoreFile()
-            if (store != null) {
-                storeFile = store
-                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
-                    ?: keystoreProperties.getProperty("storePassword")
-                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-                    ?: keystoreProperties.getProperty("keyAlias")
-                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-                    ?: keystoreProperties.getProperty("keyPassword")
-            }
+                ?: throw GradleException(
+                    "Release keystore not configured. Create android/keystore.properties " +
+                        "or set RELEASE_STORE_* environment variables. See docs/RELEASE_SIGNING.md."
+                )
+            storeFile = store
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                ?: keystoreProperties.getProperty("storePassword")
+                ?: throw GradleException("Release storePassword missing (keystore.properties or RELEASE_STORE_PASSWORD).")
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                ?: keystoreProperties.getProperty("keyAlias")
+                ?: throw GradleException("Release keyAlias missing (keystore.properties or RELEASE_KEY_ALIAS).")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+                ?: keystoreProperties.getProperty("keyPassword")
+                ?: throw GradleException("Release keyPassword missing (keystore.properties or RELEASE_KEY_PASSWORD).")
         }
     }
 
@@ -83,16 +88,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            val releaseSigning = signingConfigs.getByName("release")
-            signingConfig = if (releaseSigning.storeFile != null &&
-                !releaseSigning.storePassword.isNullOrBlank() &&
-                !releaseSigning.keyAlias.isNullOrBlank() &&
-                !releaseSigning.keyPassword.isNullOrBlank()
-            ) {
-                releaseSigning
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isDebuggable = true
