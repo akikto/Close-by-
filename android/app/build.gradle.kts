@@ -3,6 +3,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.Base64
 import java.util.Properties
+import org.gradle.api.GradleException
 
 plugins {
     id("com.android.application")
@@ -21,22 +22,37 @@ val localProperties = Properties().apply {
 val keystoreProperties = Properties().apply {
     val keystorePropsFile = rootProject.file("keystore.properties")
     if (keystorePropsFile.exists()) {
-        load(FileInputStream(keystorePropsFile))
+        keystorePropsFile.inputStream().use { load(it) }
     }
 }
 
+fun releaseSigningValue(environmentName: String, propertyName: String): String? =
+    keystoreProperties.getProperty(propertyName)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(environmentName)?.takeIf { it.isNotBlank() }
+
 fun resolveSigningStoreFile(): File? {
+    val localPath = keystoreProperties.getProperty("storeFile")?.takeIf { it.isNotBlank() }
+    if (localPath != null) {
+        val localFile = rootProject.file(localPath)
+        if (!localFile.isFile) {
+            throw GradleException("The keystore configured in android/keystore.properties does not exist.")
+        }
+        return localFile
+    }
+
     val envBase64 = System.getenv("RELEASE_STORE_FILE_BASE64")?.takeIf { it.isNotBlank() }
     if (envBase64 != null) {
-        val decoded = Base64.getDecoder().decode(envBase64)
+        val decoded = try {
+            Base64.getDecoder().decode(envBase64)
+        } catch (_: IllegalArgumentException) {
+            throw GradleException("RELEASE_STORE_FILE_BASE64 must contain a valid base64-encoded keystore.")
+        }
         val out = File(rootProject.layout.buildDirectory.get().asFile, "release.keystore")
         out.parentFile.mkdirs()
         FileOutputStream(out).use { it.write(decoded) }
         return out
     }
-    val path = System.getenv("RELEASE_STORE_FILE")?.takeIf { it.isNotBlank() }
-        ?: keystoreProperties.getProperty("storeFile")?.takeIf { it.isNotBlank() }
-        ?: return null
+    val path = System.getenv("RELEASE_STORE_FILE")?.takeIf { it.isNotBlank() } ?: return null
     val file = rootProject.file(path)
     return file.takeIf { it.exists() }
 }
@@ -69,12 +85,9 @@ android {
             val store = resolveSigningStoreFile()
             if (store != null) {
                 storeFile = store
-                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
-                    ?: keystoreProperties.getProperty("storePassword")
-                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-                    ?: keystoreProperties.getProperty("keyAlias")
-                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-                    ?: keystoreProperties.getProperty("keyPassword")
+                storePassword = releaseSigningValue("RELEASE_STORE_PASSWORD", "storePassword")
+                keyAlias = releaseSigningValue("RELEASE_KEY_ALIAS", "keyAlias")
+                keyPassword = releaseSigningValue("RELEASE_KEY_PASSWORD", "keyPassword")
             }
         }
     }
@@ -83,16 +96,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            val releaseSigning = signingConfigs.getByName("release")
-            signingConfig = if (releaseSigning.storeFile != null &&
-                !releaseSigning.storePassword.isNullOrBlank() &&
-                !releaseSigning.keyAlias.isNullOrBlank() &&
-                !releaseSigning.keyPassword.isNullOrBlank()
-            ) {
-                releaseSigning
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isDebuggable = true
@@ -132,6 +136,41 @@ android {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
         }
+    }
+}
+
+val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
+    group = "verification"
+    description = "Ensures release artifacts use a configured release keystore, never the debug key."
+    doLast {
+        val signing = android.signingConfigs.getByName("release")
+        val missing = buildList {
+            if (signing.storeFile?.isFile != true) add("keystore file")
+            if (signing.storePassword.isNullOrBlank()) add("store password")
+            if (signing.keyAlias.isNullOrBlank()) add("key alias")
+            if (signing.keyPassword.isNullOrBlank()) add("key password")
+        }
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                "Release signing is required for release artifacts. Missing: ${missing.joinToString()}. " +
+                    "Configure RELEASE_* secrets or android/keystore.properties; see docs/RELEASE_SIGNING.md. " +
+                    "Debug signing is not used for release builds."
+            )
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name in setOf(
+            "assembleRelease",
+            "bundleRelease",
+            "packageRelease",
+            "packageReleaseBundle",
+            "signReleaseBundle",
+            "validateSigningRelease"
+        )
+    ) {
+        dependsOn(verifyReleaseSigning)
     }
 }
 

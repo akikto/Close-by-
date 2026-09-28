@@ -113,6 +113,17 @@ class AndroidLocationProvider(
     private suspend fun fetchCurrentLocation(
         cancellation: CancellationTokenSource
     ) = suspendCancellableCoroutine { cont ->
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!fineGranted && !coarseGranted) {
+            if (cont.isActive) cont.resume(null)
+            return@suspendCancellableCoroutine
+        }
+
         fusedClient.getCurrentLocation(
             Priority.PRIORITY_BALANCED_POWER_ACCURACY,
             cancellation.token

@@ -70,13 +70,16 @@ No `CALL_PHONE`, `READ_CONTACTS`, or background location.
 
 ## Pre-submission build
 
-- [ ] `./gradlew test` PASS
-- [ ] `./gradlew lint` PASS
-- [ ] `./gradlew assembleDebug` PASS
-- [ ] `assembleRelease` only with secure signing (see `RELEASE_SIGNING.md`)
+- [x] `./gradlew test` PASS
+- [x] `./gradlew lint` PASS
+- [x] `./gradlew assembleDebug` PASS
+- [x] `./gradlew bundleRelease` PASS with a real release keystore; verified with `jarsigner` (see `RELEASE_SIGNING.md`)
+
+Release signing is required for release artifacts; the build does not fall back to the debug key. Play Console setup and listing items above remain owner actions.
 
 ## Known placeholders
 
 - Privacy policy URL: **not configured in repo**
 - Feature graphic / marketing screenshots: **not in repo**
+- Backend config: `android/local.properties` is absent in this workspace, so this AAB uses mock data and demo OTP. Configure a test Supabase project and rebuild before inviting Play testers who need real backend behavior.
 - FCM push: optional; in-app notifications work without FCM
