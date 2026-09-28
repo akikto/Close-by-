@@ -8,3 +8,9 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 300000
+
+[userenv]
+
+[userenv.shared]
+RELEASE_KEY_ALIAS = "closeby-upload"
+RELEASE_STORE_FILE = "closeby-upload.keystore"
