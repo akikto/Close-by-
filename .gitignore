@@ -4,11 +4,13 @@
 .idea/
 .DS_Store
 /build
+**/build/
 /captures
 .externalNativeBuild
 .cxx
 *.apk
 *.aab
+.android-sdk/
 
 # Never commit real Supabase credentials or signing secrets
 local.properties
