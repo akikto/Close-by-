@@ -27,7 +27,7 @@ Phases 1–16 complete. Batch 5 (Phases 17–20) adds final UX gaps, backend ind
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_ANON_KEY=your-anon-key
    ```
-3. Apply migrations per `docs/supabase/MIGRATION_ORDER.md` (through `schema_phase17.sql`).
+3. Apply migrations per `docs/supabase/MIGRATION_ORDER.md` (through `schema_phase18.sql`).
 4. Build: `./gradlew assembleDebug`
 
 **CI / demo APK:** GitHub Actions builds without Supabase secrets use **demo auth** — OTP emails are **not** sent. On Profile → enter any email → use code `123456` to sign in. For real OTP, add `SUPABASE_URL` and `SUPABASE_ANON_KEY` as repository secrets and enable Email auth + SMTP in your Supabase project.

@@ -1,0 +1,1 @@
+- [Supabase view migration drift](supabase-view-migration-drift.md) — existing projects may have later view columns even when the migration ledger is empty.
